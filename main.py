@@ -1872,6 +1872,16 @@ def terms_of_service():
     """Страница 'Условия использования'"""
     return render_template('terms_of_service.html')
 
+@app.route('/privacy_policy')
+def privacy_policy():
+    """Страница 'Политика конфиденциальности'"""
+    return render_template('privacy_policy.html')
+
+@app.route('/cookie_policy')
+def cookie_policy():
+    """Страница 'Политика использования файлов cookie'"""
+    return render_template('cookie_policy.html')
+
 # === ПРОДАЖА АВТОМОБИЛЕЙ ===
 @app.route('/sales')
 def sales():
