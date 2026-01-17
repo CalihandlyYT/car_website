@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, send_from_directory
 import random
 import string
 from datetime import datetime, timedelta
@@ -6,7 +6,7 @@ import os
 import sqlite3
 import hashlib
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static')
 app.config['DEBUG'] = True
 app.secret_key = 'supersecretkey'
 
@@ -2161,5 +2161,15 @@ def view_post(post_id):
  #   init_db()  # Создаём БД при старте
 #app.run(debug=True, host='127.0.0.1', port=5000)
 
+# === PWA МАРШРУТЫ ===
+@app.route('/manifest.json')
+def manifest():
+    return send_from_directory('static', 'manifest.json', mimetype='application/manifest+json')
+
+@app.route('/sw.js')
+def service_worker():
+    return send_from_directory('static', 'sw.js', mimetype='application/javascript')
+
 if __name__ == '__main__':
-   app.run()
+    init_db()  # Создаём БД при старте
+    app.run(debug=True, host='0.0.0.0', port=5000)

@@ -2,7 +2,14 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Обзоры лучших AMG и M-автомобилей, сравнения, характеристики и многое другое">
+    <meta name="theme-color" content="#1e3c72">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Авто-обзор">
+    <link rel="manifest" href="{{ url_for('manifest') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icon-192x192.png') }}">
     <title>Рейтинг AMG и M-автомобилей</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -142,6 +149,25 @@
         .logout-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 20px rgba(245, 87, 108, 0.5);
+        }
+        
+        .install-btn {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%) !important;
+            color: white !important;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            display: none;
+        }
+        
+        .install-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(39, 174, 96, 0.5);
         }
         
         .staff-btn {
@@ -720,15 +746,14 @@
                 grid-template-columns: 1fr;
                 gap: 30px;
             }
-        }
-        
-        @media (max-width: 768px) {
+            
             header h1 {
                 font-size: 1.8rem;
             }
             
             nav {
                 padding: 10px;
+                flex-wrap: wrap;
             }
             
             nav a {
@@ -742,6 +767,42 @@
             
             .car-container {
                 padding: 25px;
+            }
+            
+            .car-image {
+                max-height: 400px;
+            }
+            
+            .car-image-container {
+                padding: 15px;
+            }
+            
+            /* Улучшенная поддержка мобильных устройств */
+            body {
+                -webkit-touch-callout: none;
+                -webkit-user-select: none;
+                -khtml-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+                -webkit-tap-highlight-color: transparent;
+            }
+            
+            /* Предотвращение масштабирования при двойном тапе */
+            * {
+                touch-action: manipulation;
+            }
+        }
+        
+        /* Стили для полноэкранного режима PWA */
+        @media (display-mode: standalone) {
+            body {
+                padding-top: env(safe-area-inset-top);
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+            
+            header {
+                padding-top: calc(30px + env(safe-area-inset-top));
             }
         }
     </style>
@@ -773,6 +834,8 @@
         <a href="{{ url_for('profile') }}" class="profile-btn">👤 Профиль</a>
         <!-- Кнопка выхода -->
         <a href="{{ url_for('logout') }}" class="logout-btn">Выйти</a>
+        <!-- Кнопка установки PWA -->
+        <button id="installButton" class="install-btn">📱 Установить</button>
     </nav>
     
     <!-- Фильтры -->
@@ -1228,6 +1291,76 @@
                 closeImageModal();
             }
         });
+        
+        // Регистрация Service Worker для PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((registration) => {
+                        console.log('ServiceWorker registered successfully:', registration.scope);
+                    })
+                    .catch((error) => {
+                        console.log('ServiceWorker registration failed:', error);
+                    });
+            });
+        }
+        
+        // Предотвращение масштабирования при двойном тапе на мобильных
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function (event) {
+            const now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+        
+        // Кнопка установки PWA
+        let deferredPrompt;
+        const installButton = document.getElementById('installButton');
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Предотвращаем автоматическое отображение подсказки
+            e.preventDefault();
+            // Сохраняем событие для последующего использования
+            deferredPrompt = e;
+            // Показываем кнопку установки
+            if (installButton) {
+                installButton.style.display = 'block';
+            }
+        });
+        
+        if (installButton) {
+            installButton.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    // Показываем подсказку установки
+                    deferredPrompt.prompt();
+                    // Ждем ответа пользователя
+                    const { outcome } = await deferredPrompt.userChoice;
+                    console.log(`User response to the install prompt: ${outcome}`);
+                    // Очищаем сохраненное событие
+                    deferredPrompt = null;
+                    // Скрываем кнопку
+                    installButton.style.display = 'none';
+                }
+            });
+        }
+        
+        // Скрываем кнопку, если приложение уже установлено
+        window.addEventListener('appinstalled', () => {
+            console.log('PWA was installed');
+            if (installButton) {
+                installButton.style.display = 'none';
+            }
+            deferredPrompt = null;
+        });
+        
+        // Проверяем, установлено ли приложение
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+            if (installButton) {
+                installButton.style.display = 'none';
+            }
+        }
     </script>
 </body>
 </html>
