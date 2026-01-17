@@ -2118,7 +2118,7 @@ def view_post(post_id):
 # === ЗАПУСК ПРИЛОЖЕНИЯ ===
 if __name__ == '__main__':
     init_db()  # Создаём БД при старте
-    app.run(debug=True, host='127.0.0.1', port=5000)
+    app.run(host='0.0.0.0', port=5000)
 
 
 
