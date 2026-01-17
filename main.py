@@ -1867,6 +1867,11 @@ def career():
     
     return render_template('career.html')
 
+@app.route('/terms_of_service')
+def terms_of_service():
+    """Страница 'Условия использования'"""
+    return render_template('terms_of_service.html')
+
 # === ПРОДАЖА АВТОМОБИЛЕЙ ===
 @app.route('/sales')
 def sales():
