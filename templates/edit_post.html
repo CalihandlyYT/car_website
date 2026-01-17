@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if admin_mode %}Админ: {% endif %}Редактировать пост</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #1a1a1a;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        h3 {
+            color: #1e3c72;
+            margin: 25px 0 15px;
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 1rem;
+        }
+        
+        input[type="text"],
+        input[type="url"] {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            outline: none;
+            font-family: 'Inter', sans-serif;
+            margin-bottom: 10px;
+        }
+        
+        input[type="text"]:focus,
+        input[type="url"]:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .field {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin: 15px 0;
+            padding: 15px;
+            background: #f8f9ff;
+            border-radius: 12px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s;
+        }
+        
+        .field:hover {
+            border-color: #667eea;
+            transform: translateX(5px);
+        }
+        
+        .field input {
+            flex: 1;
+            margin: 0;
+        }
+        
+        .remove {
+            color: #f5576c;
+            cursor: pointer;
+            font-size: 1.5rem;
+            font-weight: 700;
+            padding: 5px 15px;
+            background: rgba(245, 87, 108, 0.1);
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        
+        .remove:hover {
+            background: #f5576c;
+            color: white;
+            transform: scale(1.1);
+        }
+        
+        button[type="button"] {
+            padding: 12px 25px;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+            font-family: 'Inter', sans-serif;
+            box-shadow: 0 3px 10px rgba(17, 153, 142, 0.3);
+        }
+        
+        button[type="button"]:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(17, 153, 142, 0.4);
+        }
+        
+        button[type="submit"] {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+            font-family: 'Inter', sans-serif;
+            margin-top: 30px;
+        }
+        
+        button[type="submit"]:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.6);
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-top: 25px;
+            padding: 12px 25px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s;
+            border: 2px solid #667eea;
+        }
+        
+        .back-link:hover {
+            background: #667eea;
+            color: white;
+            transform: translateX(-5px);
+        }
+        
+        .error {
+            background: rgba(245, 87, 108, 0.1);
+            color: #f5576c;
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border-left: 4px solid #f5576c;
+            font-weight: 500;
+            animation: shake 0.5s;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✏️ {% if admin_mode %}Админ: {% endif %}Редактировать пост</h1>
+        
+        {% if error %}
+            <div class="error">{{ error }}</div>
+        {% endif %}
+        
+        <form method="post">
+            <div class="form-group">
+                <label>Название</label>
+                <input type="text" name="title" value="{{ post.name }}" required>
+            </div>
+
+            <div class="form-group">
+                <label>Ссылка на основное изображение</label>
+                <input type="url" name="image" value="{{ post.image }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="category">Категория автомобиля</label>
+                <select name="category" id="category" style="width: 100%; padding: 15px 20px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 1rem; font-family: 'Inter', sans-serif;">
+                    <option value="">-- Выберите категорию --</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat }}" {{ 'selected' if post.category == cat else '' }}>{{ cat|title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <h3>📸 Дополнительные изображения</h3>
+            <div id="additional_images">
+                {% if post.images %}
+                {% for img in post.images %}
+                <div class="field">
+                    <input type="url" name="additional_images" value="{{ img }}" placeholder="https://example.com/image2.jpg">
+                    <span class="remove" onclick="removeField(this)">✕</span>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="field">
+                    <input type="url" name="additional_images" placeholder="https://example.com/image2.jpg">
+                    <span class="remove" onclick="removeField(this)">✕</span>
+                </div>
+                {% endif %}
+            </div>
+            <button type="button" onclick="addAdditionalImage()">➕ Добавить изображение</button>
+            
+            <h3>🏷️ Теги</h3>
+            <div id="tags">
+                {% if post.tags %}
+                {% for tag in post.tags %}
+                <div class="field">
+                    <input type="text" name="tags" value="{{ tag }}" placeholder="Введите тег">
+                    <span class="remove" onclick="removeField(this)">✕</span>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="field">
+                    <input type="text" name="tags" placeholder="Введите тег">
+                    <span class="remove" onclick="removeField(this)">✕</span>
+                </div>
+                {% endif %}
+            </div>
+            <button type="button" onclick="addTag()">➕ Добавить тег</button>
+            {% if all_tags %}
+            <div style="margin-top: 15px; padding: 15px; background: #f8f9ff; border-radius: 12px;">
+                <strong>Популярные теги:</strong>
+                {% for tag in all_tags %}
+                <span style="display: inline-block; margin: 5px; padding: 5px 10px; background: white; border-radius: 5px; cursor: pointer; font-size: 0.9em;" onclick="addTagFromList('{{ tag }}')">{{ tag }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <h3>Характеристики</h3>
+            <div id="specs">
+                {% for key, value in post.specs.items() %}
+                <div class="field">
+                    <input type="text" name="spec_key" value="{{ key }}" placeholder="Название" required>
+                    <input type="text" name="spec_value" value="{{ value }}" placeholder="Значение" required>
+                    <span class="remove" onclick="removeField(this)">✕</span>
+                </div>
+                {% endfor %}
+            </div>
+            <button type="button" onclick="addSpec()">➕ Добавить характеристику</button>
+
+            <h3>Плюсы</h3>
+            <div id="pros">
+                {% for pro in post.pros %}
+                <div class="field">
+                    <input type="text" name="pro" value="{{ pro }}" placeholder="Плюс" required>
+                    <span class="remove" onclick="removeField(this)">✕</span>
+                </div>
+                {% endfor %}
+            </div>
+            <button type="button" onclick="addPro()">➕ Добавить плюс</button>
+
+            <h3>Минусы</h3>
+            <div id="cons">
+                {% for con in post.cons %}
+                <div class="field">
+                    <input type="text" name="con" value="{{ con }}" placeholder="Минус" required>
+                    <span class="remove" onclick="removeField(this)">✕</span>
+                </div>
+                {% endfor %}
+            </div>
+            <button type="button" onclick="addCon()">➕ Добавить минус</button>
+
+            <button type="submit">💾 Сохранить изменения</button>
+        </form>
+        
+        {% if admin_mode %}
+            <a href="{{ url_for('admin_panel') }}" class="back-link">← Назад в админ-панель</a>
+        {% else %}
+            <a href="{{ url_for('view_post', post_id=post.id) }}" class="back-link">← Назад к посту</a>
+        {% endif %}
+    </div>
+
+    <script>
+        function addSpec() {
+            const container = document.getElementById('specs');
+            const div = document.createElement('div');
+            div.className = 'field';
+            div.innerHTML = `
+                <input type="text" name="spec_key" placeholder="Название" required>
+                <input type="text" name="spec_value" placeholder="Значение" required>
+                <span class="remove" onclick="removeField(this)">✕</span>
+            `;
+            container.appendChild(div);
+        }
+        function addPro() {
+            const container = document.getElementById('pros');
+            const div = document.createElement('div');
+            div.className = 'field';
+            div.innerHTML = `
+                <input type="text" name="pro" placeholder="Плюс" required>
+                <span class="remove" onclick="removeField(this)">✕</span>
+            `;
+            container.appendChild(div);
+        }
+        function addCon() {
+            const container = document.getElementById('cons');
+            const div = document.createElement('div');
+            div.className = 'field';
+            div.innerHTML = `
+                <input type="text" name="con" placeholder="Минус" required>
+                <span class="remove" onclick="removeField(this)">✕</span>
+            `;
+            container.appendChild(div);
+        }
+        
+        function addAdditionalImage() {
+            const container = document.getElementById('additional_images');
+            const div = document.createElement('div');
+            div.className = 'field';
+            div.innerHTML = `
+                <input type="url" name="additional_images" placeholder="https://example.com/image2.jpg">
+                <span class="remove" onclick="removeField(this)">✕</span>
+            `;
+            container.appendChild(div);
+        }
+        
+        function addTag() {
+            const container = document.getElementById('tags');
+            const div = document.createElement('div');
+            div.className = 'field';
+            div.innerHTML = `
+                <input type="text" name="tags" placeholder="Введите тег">
+                <span class="remove" onclick="removeField(this)">✕</span>
+            `;
+            container.appendChild(div);
+        }
+        
+        function addTagFromList(tagName) {
+            const container = document.getElementById('tags');
+            const existingTags = Array.from(container.querySelectorAll('input[name="tags"]')).map(inp => inp.value.trim());
+            if (existingTags.includes(tagName)) return;
+            
+            const div = document.createElement('div');
+            div.className = 'field';
+            div.innerHTML = `
+                <input type="text" name="tags" value="${tagName}" placeholder="Введите тег">
+                <span class="remove" onclick="removeField(this)">✕</span>
+            `;
+            container.appendChild(div);
+        }
+        function removeField(el) {
+            el.parentElement.remove();
+        }
+    </script>
+</body>
+</html>

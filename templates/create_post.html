@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Создать пост</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #1a1a1a;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 1rem;
+        }
+        
+        input[type="text"],
+        input[type="url"] {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            outline: none;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        input[type="text"]:focus,
+        input[type="url"]:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .section-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #1e3c72;
+            margin: 35px 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        .field {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: center;
+            background: #f8f9ff;
+            padding: 15px;
+            border-radius: 12px;
+            transition: all 0.3s;
+        }
+        
+        .field:hover {
+            background: #f0f2ff;
+            transform: translateX(5px);
+        }
+        
+        .field input {
+            flex: 1;
+            margin-bottom: 0;
+        }
+        
+        .field input[type="text"]:first-child {
+            max-width: 200px;
+        }
+        
+        .remove {
+            color: #f5576c;
+            cursor: pointer;
+            font-size: 1.5rem;
+            font-weight: bold;
+            padding: 5px 10px;
+            transition: all 0.3s;
+            border-radius: 8px;
+            background: rgba(245, 87, 108, 0.1);
+            min-width: 40px;
+            text-align: center;
+            line-height: 1;
+        }
+        
+        .remove:hover {
+            background: #f5576c;
+            color: white;
+            transform: scale(1.1);
+        }
+        
+        .btn-add {
+            padding: 12px 25px;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(17, 153, 142, 0.4);
+            font-family: 'Inter', sans-serif;
+            margin-bottom: 20px;
+        }
+        
+        .btn-add:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(17, 153, 142, 0.5);
+        }
+        
+        .btn-submit {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+            font-family: 'Inter', sans-serif;
+            margin-top: 30px;
+        }
+        
+        .btn-submit:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.6);
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-top: 25px;
+            padding: 12px 25px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s;
+            border: 2px solid #667eea;
+        }
+        
+        .back-link:hover {
+            background: #667eea;
+            color: white;
+            transform: translateX(-5px);
+        }
+        
+        .error {
+            background: rgba(245, 87, 108, 0.1);
+            color: #f5576c;
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border-left: 4px solid #f5576c;
+            font-weight: 500;
+            animation: shake 0.5s;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        
+        .field-group {
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 25px;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .field {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .field input[type="text"]:first-child {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✨ Создать пост</h1>
+        
+        {% if error %}
+            <div class="error">{{ error }}</div>
+        {% endif %}
+        
+        <form method="post">
+            <div class="form-group">
+                <label for="title">Название поста</label>
+                <input type="text" name="title" id="title" placeholder="Введите название..." required>
+            </div>
+            
+            <div class="form-group">
+                <label for="image">Ссылка на основное изображение</label>
+                <input type="url" name="image" id="image" placeholder="https://example.com/image.jpg" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="category">Категория автомобиля</label>
+                <select name="category" id="category" style="width: 100%; padding: 15px 20px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 1rem; font-family: 'Inter', sans-serif;">
+                    <option value="">-- Выберите категорию --</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat }}">{{ cat|title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <h3 class="section-title">📸 Дополнительные изображения</h3>
+            <div class="field-group">
+                <div id="additional_images">
+                    <div class="field">
+                        <input type="url" name="additional_images" placeholder="https://example.com/image2.jpg">
+                        <span class="remove" onclick="removeField(this)">✕</span>
+                    </div>
+                </div>
+                <button type="button" class="btn-add" onclick="addAdditionalImage()">➕ Добавить изображение</button>
+            </div>
+            
+            <h3 class="section-title">🏷️ Теги</h3>
+            <div class="field-group">
+                <div id="tags">
+                    <div class="field">
+                        <input type="text" name="tags" placeholder="Введите тег (например: спорткар, премиум)">
+                        <span class="remove" onclick="removeField(this)">✕</span>
+                    </div>
+                </div>
+                <button type="button" class="btn-add" onclick="addTag()">➕ Добавить тег</button>
+                {% if all_tags %}
+                <div style="margin-top: 15px; padding: 15px; background: #f8f9ff; border-radius: 12px;">
+                    <strong>Популярные теги:</strong>
+                    {% for tag in all_tags %}
+                    <span style="display: inline-block; margin: 5px; padding: 5px 10px; background: white; border-radius: 5px; cursor: pointer; font-size: 0.9em;" onclick="addTagFromList('{{ tag }}')">{{ tag }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <h3 class="section-title">🔧 Характеристики</h3>
+            <div class="field-group">
+                <div id="specs">
+                    <div class="field">
+                        <input type="text" name="spec_key" placeholder="Название характеристики" required>
+                        <input type="text" name="spec_value" placeholder="Значение" required>
+                        <span class="remove" onclick="removeField(this)">✕</span>
+                    </div>
+                </div>
+                <button type="button" class="btn-add" onclick="addSpec()">➕ Добавить характеристику</button>
+            </div>
+            
+            <h3 class="section-title">✅ Плюсы</h3>
+            <div class="field-group">
+                <div id="pros">
+                    <div class="field">
+                        <input type="text" name="pro" placeholder="Опишите плюс..." required>
+                        <span class="remove" onclick="removeField(this)">✕</span>
+                    </div>
+                </div>
+                <button type="button" class="btn-add" onclick="addPro()">➕ Добавить плюс</button>
+            </div>
+            
+            <h3 class="section-title">❌ Минусы</h3>
+            <div class="field-group">
+                <div id="cons">
+                    <div class="field">
+                        <input type="text" name="con" placeholder="Опишите минус..." required>
+                        <span class="remove" onclick="removeField(this)">✕</span>
+                    </div>
+                </div>
+                <button type="button" class="btn-add" onclick="addCon()">➕ Добавить минус</button>
+            </div>
+            
+            <button type="submit" class="btn-submit">🚀 Опубликовать пост</button>
+        </form>
+        
+        <a href="{{ url_for('index') }}" class="back-link">← Назад на главную</a>
+    </div>
+    
+    <script>
+        function addSpec() {
+            const container = document.getElementById('specs');
+            const div = document.createElement('div');
+            div.className = 'field';
+            div.innerHTML = `
+                <input type="text" name="spec_key" placeholder="Название характеристики" required>
+                <input type="text" name="spec_value" placeholder="Значение" required>
+                <span class="remove" onclick="removeField(this)">✕</span>
+            `;
+            container.appendChild(div);
+            div.querySelector('input').focus();
+        }
+        
+        function addPro() {
+            const container = document.getElementById('pros');
+            const div = document.createElement('div');
+            div.className = 'field';
+            div.innerHTML = `
+                <input type="text" name="pro" placeholder="Опишите плюс..." required>
+                <span class="remove" onclick="removeField(this)">✕</span>
+            `;
+            container.appendChild(div);
+            div.querySelector('input').focus();
+        }
+        
+        function addCon() {
+            const container = document.getElementById('cons');
+            const div = document.createElement('div');
+            div.className = 'field';
+            div.innerHTML = `
+                <input type="text" name="con" placeholder="Опишите минус..." required>
+                <span class="remove" onclick="removeField(this)">✕</span>
+            `;
+            container.appendChild(div);
+            div.querySelector('input').focus();
+        }
+        
+        function addAdditionalImage() {
+            const container = document.getElementById('additional_images');
+            const div = document.createElement('div');
+            div.className = 'field';
+            div.innerHTML = `
+                <input type="url" name="additional_images" placeholder="https://example.com/image2.jpg">
+                <span class="remove" onclick="removeField(this)">✕</span>
+            `;
+            container.appendChild(div);
+            div.querySelector('input').focus();
+        }
+        
+        function addTag() {
+            const container = document.getElementById('tags');
+            const div = document.createElement('div');
+            div.className = 'field';
+            div.innerHTML = `
+                <input type="text" name="tags" placeholder="Введите тег">
+                <span class="remove" onclick="removeField(this)">✕</span>
+            `;
+            container.appendChild(div);
+            div.querySelector('input').focus();
+        }
+        
+        function addTagFromList(tagName) {
+            const container = document.getElementById('tags');
+            // Проверяем, нет ли уже такого тега
+            const existingTags = Array.from(container.querySelectorAll('input[name="tags"]')).map(inp => inp.value.trim());
+            if (existingTags.includes(tagName)) return;
+            
+            const div = document.createElement('div');
+            div.className = 'field';
+            div.innerHTML = `
+                <input type="text" name="tags" value="${tagName}" placeholder="Введите тег">
+                <span class="remove" onclick="removeField(this)">✕</span>
+            `;
+            container.appendChild(div);
+        }
+        
+        function removeField(el) {
+            const field = el.parentElement;
+            field.style.animation = 'fadeOut 0.3s ease-out';
+            setTimeout(() => {
+                field.remove();
+            }, 300);
+        }
+        
+        // Добавляем анимацию fadeOut
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeOut {
+                from {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+                to {
+                    opacity: 0;
+                    transform: translateX(-20px);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

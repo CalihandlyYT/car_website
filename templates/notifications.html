@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Уведомления</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .notification {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .notification.unread {
+            border-left: 4px solid #007bff;
+        }
+        .notification-time {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 50px;
+            background: white;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔔 Уведомления</h1>
+        <a href="{{ url_for('index') }}" class="btn btn-primary">← Назад</a>
+        <button onclick="markAllSeen()" class="btn btn-primary">Отметить все как прочитанные</button>
+    </div>
+    
+    {% if notifications %}
+    {% for notification in notifications %}
+    <div class="notification {% if not notification.seen %}unread{% endif %}">
+        <p>
+            {% if notification.type == 'comment' %}
+                💬
+            {% elif notification.type == 'like' %}
+                ❤️
+            {% elif notification.type == 'subscription' %}
+                👤
+            {% elif notification.type == 'new_post' %}
+                📝
+            {% else %}
+                🔔
+            {% endif %}
+            <strong>{{ notification.message }}</strong>
+        </p>
+        <p class="notification-time">{{ notification.created_at }}</p>
+        {% if notification.post_id %}
+        <a href="{{ url_for('view_post', post_id=notification.post_id) }}" class="btn btn-primary">Открыть пост</a>
+        {% endif %}
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="empty-state">
+        <h2>Нет уведомлений</h2>
+        <p>Когда появятся новые уведомления, они будут отображаться здесь</p>
+    </div>
+    {% endif %}
+    
+    <script>
+        function markAllSeen() {
+            fetch('/notifications/mark_all_seen', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                }
+            });
+        }
+    </script>
+</body>
+</html>
+

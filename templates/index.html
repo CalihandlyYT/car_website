@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Рейтинг AMG и M-автомобилей</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #1a1a1a;
+            line-height: 1.6;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 30px 0;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
+        }
+        
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            text-shadow: 2px 2px 10px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 1;
+            letter-spacing: -1px;
+        }
+        
+        nav {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            padding: 15px;
+            flex-wrap: wrap;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        nav a {
+            color: #2c3e50;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 12px 20px;
+            border-radius: 25px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            font-size: 0.95rem;
+        }
+        
+        nav a::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+            z-index: -1;
+        }
+        
+        nav a:hover::before, nav a.active::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        nav a:hover, nav a.active {
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .sales-btn {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%) !important;
+            color: white !important;
+        }
+        
+        .sales-btn::before {
+            background: linear-gradient(135deg, #e67e22 0%, #f39c12 100%) !important;
+        }
+        
+        .sales-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(243, 156, 18, 0.5);
+        }
+        
+        .profile-btn {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%) !important;
+            color: white !important;
+        }
+        
+        .profile-btn::before {
+            background: linear-gradient(135deg, #38ef7d 0%, #11998e 100%) !important;
+        }
+        
+        .profile-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(17, 153, 142, 0.5);
+        }
+        
+        .logout-btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
+            color: white !important;
+        }
+        
+        .logout-btn::before {
+            background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%) !important;
+        }
+        
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(245, 87, 108, 0.5);
+        }
+        
+        .staff-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            color: white !important;
+        }
+        
+        .staff-btn::before {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%) !important;
+        }
+        
+        .staff-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.5);
+        }
+        
+        .staff-section {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        .staff-section h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e3c72;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+        }
+        
+        .staff-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 25px;
+        }
+        
+        .staff-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 25px;
+            border-radius: 15px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        
+        .staff-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-left-color: #764ba2;
+        }
+        
+        .staff-card .rank {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .staff-card .email {
+            font-size: 1rem;
+            color: #2c3e50;
+            word-break: break-all;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        
+        .staff-card .email a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .staff-card .email a:hover {
+            color: #764ba2;
+            text-decoration: underline;
+        }
+        
+        .empty-staff {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-size: 1.1rem;
+        }
+        
+        .back-to-main {
+            display: block;
+            text-align: center;
+            margin: 30px auto;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1rem;
+            width: fit-content;
+            transition: all 0.3s;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .back-to-main:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.6);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        
+        .car-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        .car-container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 50px rgba(0,0,0,0.15);
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .car-container h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #1e3c72;
+            margin-bottom: 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .car-image {
+            width: 100%;
+            max-height: 500px;
+            object-fit: cover;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s;
+        }
+        
+        .car-image:hover {
+            transform: scale(1.02);
+        }
+        
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 30px 0 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .specs {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 25px;
+            border-radius: 15px;
+            margin: 20px 0;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        
+        .specs ul {
+            list-style: none;
+        }
+        
+        .specs li {
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .specs li:last-child {
+            border-bottom: none;
+        }
+        
+        .specs li strong {
+            color: #667eea;
+            font-weight: 600;
+        }
+        
+        ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        ul li {
+            padding: 12px 0;
+            padding-left: 30px;
+            position: relative;
+            transition: padding-left 0.3s;
+        }
+        
+        ul li::before {
+            content: '▸';
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        ul li:hover {
+            padding-left: 35px;
+            color: #667eea;
+        }
+        
+        .user-posts {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid rgba(255,255,255,0.3);
+        }
+        
+        .user-posts h2 {
+            color: white;
+            text-shadow: 2px 2px 10px rgba(0,0,0,0.2);
+            margin-bottom: 25px;
+        }
+        
+        .search-form {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .search-form input {
+            padding: 15px 25px;
+            width: 100%;
+            max-width: 500px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50px;
+            background: rgba(255,255,255,0.95);
+            font-size: 1rem;
+            transition: all 0.3s;
+            outline: none;
+        }
+        
+        .search-form input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+            transform: scale(1.02);
+        }
+        
+        .search-form button {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 50px;
+            font-weight: 600;
+            margin-left: 10px;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .search-form button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+        }
+        
+        .create-post-btn {
+            display: block;
+            text-align: center;
+            margin: 30px auto;
+            padding: 18px 40px;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            width: fit-content;
+            transition: all 0.3s;
+            box-shadow: 0 5px 20px rgba(17, 153, 142, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .create-post-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .create-post-btn:hover::before {
+            width: 400px;
+            height: 400px;
+        }
+        
+        .create-post-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(17, 153, 142, 0.6);
+        }
+        
+        .post-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: fadeInUp 0.6s ease-out;
+            animation-fill-mode: both;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .post-card:nth-child(1) { animation-delay: 0.1s; }
+        .post-card:nth-child(2) { animation-delay: 0.2s; }
+        .post-card:nth-child(3) { animation-delay: 0.3s; }
+        .post-card:nth-child(4) { animation-delay: 0.4s; }
+        
+        .post-card:hover {
+            transform: translateY(-8px) scale(1.01);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+        }
+        
+        .post-card h3 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1e3c72;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .post-card img {
+            width: 100%;
+            height: 350px;
+            object-fit: cover;
+            border-radius: 15px;
+            margin: 20px 0;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+            transition: transform 0.3s;
+        }
+        
+        .post-card:hover img {
+            transform: scale(1.05);
+        }
+        
+        .post-card p {
+            color: #666;
+            margin: 10px 0;
+        }
+        
+        .post-card strong {
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        
+        .post-actions {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .post-actions a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 10px 20px;
+            border-radius: 25px;
+            background: rgba(102, 126, 234, 0.1);
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .post-actions a:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .post-actions a.liked {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+        
+        .post-actions a[style*="color: #f39c12"] {
+            background: rgba(243, 156, 18, 0.1);
+            color: #f39c12;
+        }
+        
+        .post-actions a[style*="color: #f39c12"]:hover {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            color: white;
+        }
+        
+        footer {
+            text-align: center;
+            margin: 50px 0 30px;
+            color: rgba(255,255,255,0.8);
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8rem;
+            }
+            
+            nav {
+                padding: 10px;
+            }
+            
+            nav a {
+                padding: 8px 15px;
+                font-size: 0.85rem;
+            }
+            
+            .container {
+                padding: 0 15px;
+            }
+            
+            .car-container {
+                padding: 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🏎️ Лучшие AMG и M-автомобили</h1>
+    </header>
+    <nav>
+        <!-- Вкладки автомобилей -->
+        {% for key, car in cars.items() %}
+            <a href="/?car={{ key }}" class="{{ 'active' if selected == key else '' }}">{{ car.name }}</a>
+        {% endfor %}
+        <!-- Новые функции -->
+        <a href="{{ url_for('favorites') }}" class="profile-btn">⭐ Избранное</a>
+        <a href="{{ url_for('subscriptions') }}" class="profile-btn">📬 Подписки</a>
+        <a href="{{ url_for('notifications') }}" class="profile-btn">
+            🔔 Уведомления
+            {% if unread_notifications > 0 %}
+            <span style="background: #f5576c; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.8em; margin-left: 5px;">{{ unread_notifications }}</span>
+            {% endif %}
+        </a>
+        <a href="{{ url_for('compare_posts') }}" class="profile-btn">🔍 Сравнить</a>
+        <!-- Продажа -->
+        <a href="{{ url_for('sales') }}" class="sales-btn">🚗 Продажа</a>
+        <!-- Администрация -->
+        <a href="#staff" class="staff-btn" onclick="event.preventDefault(); showStaffSection(); window.location.hash = 'staff'; return false;">👑 Администрация</a>
+        <!-- Профиль -->
+        <a href="{{ url_for('profile') }}" class="profile-btn">👤 Профиль</a>
+        <!-- Кнопка выхода -->
+        <a href="{{ url_for('logout') }}" class="logout-btn">Выйти</a>
+    </nav>
+    
+    <!-- Фильтры -->
+    <div style="background: rgba(255, 255, 255, 0.95); padding: 15px; margin: 20px auto; max-width: 1200px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+        <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
+            <strong>Фильтры:</strong>
+            <select id="categoryFilter" onchange="applyFilters()" style="padding: 8px 15px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                <option value="">Все категории</option>
+                {% for cat in categories %}
+                <option value="{{ cat }}" {{ 'selected' if category_filter == cat else '' }}>{{ cat|title }}</option>
+                {% endfor %}
+            </select>
+            <select id="tagFilter" onchange="applyFilters()" style="padding: 8px 15px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                <option value="">Все теги</option>
+                {% for tag in all_tags %}
+                <option value="{{ tag }}" {{ 'selected' if tag_filter == tag else '' }}>{{ tag }}</option>
+                {% endfor %}
+            </select>
+            <a href="{{ url_for('index') }}" style="padding: 8px 15px; background: #f5576c; color: white; text-decoration: none; border-radius: 8px;">Сбросить</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Секция администрации -->
+        <div id="staff-section" class="staff-section" style="display: none;">
+            <h2>👑 Администрация и модерация сайта</h2>
+            {% if staff_list %}
+                <div class="staff-grid">
+                    {% for staff in staff_list %}
+                    <div class="staff-card">
+                        <div class="rank">
+                            👑 {{ staff.rank_display }}
+                        </div>
+                        <div class="email">
+                            📧 <a href="mailto:{{ staff.email }}">{{ staff.email }}</a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-staff">
+                    <p>Администрация и модерация пока не назначены</p>
+                </div>
+            {% endif %}
+            <a href="#" class="back-to-main" onclick="event.preventDefault(); hideStaffSection(); return false;">← Вернуться к основному контенту</a>
+        </div>
+        
+        <!-- Текущий автомобиль -->
+        <div class="car-container">
+            <h1>{{ car.name }}</h1>
+            <img src="{{ car.image }}" alt="{{ car.name }}" class="car-image" 
+                 onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png'; this.style.opacity='0.5';">
+            
+            <h2>🔧 Характеристики</h2>
+            <div class="specs">
+                <ul>
+                    {% for param, value in car.specs.items() %}
+                        <li><strong>{{ param }}:</strong> <span>{{ value }}</span></li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <h2>✅ Плюсы</h2>
+            <ul>
+                {% for p in car.pros %}
+                    <li>{{ p }}</li>
+                {% endfor %}
+            </ul>
+
+            <h2>❌ Минусы</h2>
+            <ul>
+                {% for c in car.cons %}
+                    <li>{{ c }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- === ТВОИ ПОСТЫ === -->
+        <div class="user-posts">
+            <!-- Поиск -->
+            <form method="get" class="search-form">
+                <input type="text" name="q" value="{{ search_query }}" placeholder="🔍 Поиск по постам..." />
+                <button type="submit">Найти</button>
+                {% if search_query %}
+                    <a href="{{ url_for('index') }}" style="color: white; margin-left: 15px; text-decoration: underline;">❌ Сбросить</a>
+                {% endif %}
+            </form>
+
+            <!-- Кнопка создания поста -->
+            <a href="{{ url_for('create_post_route') }}" class="create-post-btn">✨ Создать свой пост</a>
+
+            <!-- Список пользовательских постов -->
+            <h2>📝 Пользовательские посты</h2>
+            {% if posts %}
+                {% for post in posts %}
+                    <div class="post-card">
+                        <h3>{{ post.name }}</h3>
+                        {% if post.category %}
+                        <span style="display: inline-block; padding: 5px 10px; background: #667eea; color: white; border-radius: 5px; font-size: 0.85em; margin-bottom: 10px;">{{ post.category|title }}</span>
+                        {% endif %}
+                        {% if post.tags %}
+                        <div style="margin-bottom: 10px;">
+                            {% for tag in post.tags %}
+                            <span style="display: inline-block; padding: 3px 8px; background: #f0f2ff; color: #667eea; border-radius: 3px; font-size: 0.8em; margin-right: 5px;">#{{ tag }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        {% if post.image %}
+                        <img src="{{ post.image }}" alt="{{ post.name }}" onerror="this.onerror=null; this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png'; this.style.opacity='0.5';">
+                        {% else %}
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png" alt="No image" style="opacity: 0.5; max-width: 100%; height: 350px; object-fit: cover; border-radius: 15px;">
+                        {% endif %}
+                        {% if post.images %}
+                        <div style="display: flex; gap: 5px; margin-top: 10px; flex-wrap: wrap;">
+                            {% for img in post.images[:3] %}
+                            <img src="{{ img }}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 5px; cursor: pointer;" onclick="window.open('{{ img }}', '_blank')">
+                            {% endfor %}
+                            {% if post.images|length > 3 %}
+                            <div style="width: 80px; height: 80px; background: #f0f0f0; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 0.8em; color: #666;">+{{ post.images|length - 3 }}</div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        <p><strong>Автор:</strong> {{ post.author }}</p>
+                        <p><small style="color: #999;">{{ post.created_at.split(' ')[0] }}</small></p>
+
+                        <!-- Кнопки: лайк, комментарий, избранное, подписка, жалоба, сравнение, редактирование -->
+                        <div class="post-actions" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px;">
+                            <a href="{{ url_for('like_post', post_id=post.id) }}" class="{{ 'liked' if post.liked else '' }}">
+                                ❤️ {{ post.likes }}
+                            </a>
+                            <a href="{{ url_for('view_post', post_id=post.id) }}">
+                                💬 {{ post.comments_count }} комм.
+                            </a>
+                            <button onclick="toggleFavorite({{ post.id }})" style="background: none; border: none; cursor: pointer; color: {{ '#f5576c' if post.favorited else '#666' }}; font-size: 1em;">
+                                {{ '⭐' if post.favorited else '☆' }} Избранное
+                            </button>
+                            {% set author_email = post.author.lower() + '@example.com' %}
+                            <button onclick="toggleSubscription('{{ author_email }}')" style="background: none; border: none; cursor: pointer; color: {{ '#667eea' if post.subscribed else '#666' }}; font-size: 1em;">
+                                {{ '✓' if post.subscribed else '+' }} Подписаться
+                            </button>
+                            <button onclick="reportPost({{ post.id }})" style="background: none; border: none; cursor: pointer; color: #f5576c; font-size: 1em;">⚠️ Пожаловаться</button>
+                            <button onclick="addToCompare({{ post.id }})" style="background: none; border: none; cursor: pointer; color: #667eea; font-size: 1em;">🔍 Сравнить</button>
+
+                            <!-- Редактировать — только для автора -->
+                            {% if session.email and session.email.split('@')[0].title() == post.author %}
+                                <a href="{{ url_for('edit_post', post_id=post.id) }}" style="color: #f39c12;">
+                                    ✏️ Редактировать
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="post-card" style="text-align: center; color: #999;">
+                    <p style="font-size: 1.2rem;">Пока нет пользовательских постов. Создайте первый!</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <footer>
+        © 2025 Авто-обзор | Создано с помощью Flask
+    </footer>
+    
+    <script>
+        // Проверка изменений ранга при загрузке страницы
+        function checkRankChange() {
+            fetch('/check_rank_change')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.has_change) {
+                        // Перенаправляем на страницу уведомления
+                        const params = new URLSearchParams({
+                            is_promotion: data.is_promotion ? '1' : '0',
+                            is_demotion: data.is_demotion ? '1' : '0',
+                            old_rank: data.old_rank,
+                            new_rank: data.new_rank,
+                            changed_by: data.changed_by,
+                            reason: data.reason,
+                            changed_at: data.changed_at
+                        });
+                        
+                        window.location.href = '/rank_notification?' + params.toString();
+                    }
+                })
+                .catch(err => {
+                    console.error('Ошибка при проверке изменений ранга:', err);
+                });
+        }
+        
+        // Фильтры
+        function applyFilters() {
+            const category = document.getElementById('categoryFilter').value;
+            const tag = document.getElementById('tagFilter').value;
+            const params = new URLSearchParams();
+            if (category) params.append('category', category);
+            if (tag) params.append('tag', tag);
+            window.location.href = '/?' + params.toString();
+        }
+        
+        // Избранное
+        let comparePosts = [];
+        function toggleFavorite(postId) {
+            fetch(`/toggle_favorite/${postId}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                }
+            });
+        }
+        
+        // Подписка
+        function toggleSubscription(authorEmail) {
+            fetch(`/toggle_subscription/${encodeURIComponent(authorEmail)}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                }
+            });
+        }
+        
+        // Жалоба
+        function reportPost(postId) {
+            const reason = prompt('Укажите причину жалобы:');
+            if (!reason) return;
+            
+            const formData = new FormData();
+            formData.append('target_type', 'post');
+            formData.append('target_id', postId);
+            formData.append('reason', reason);
+            
+            fetch('/report', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Жалоба отправлена модераторам');
+                } else {
+                    alert('Ошибка: ' + (data.error || 'Неизвестная ошибка'));
+                }
+            });
+        }
+        
+        // Сравнение
+        function addToCompare(postId) {
+            if (comparePosts.length === 0) {
+                comparePosts.push(postId);
+                alert('Первый автомобиль выбран. Выберите второй для сравнения.');
+            } else if (comparePosts.length === 1) {
+                comparePosts.push(postId);
+                window.location.href = `/compare?post1=${comparePosts[0]}&post2=${comparePosts[1]}`;
+            } else {
+                comparePosts = [postId];
+                alert('Выбран новый автомобиль. Выберите второй для сравнения.');
+            }
+        }
+        
+        // Проверяем при загрузке страницы
+        window.addEventListener('DOMContentLoaded', checkRankChange);
+        
+        // Проверяем каждые 30 секунд (на случай, если пользователь долго на странице)
+        setInterval(checkRankChange, 30000);
+    </script>
+    
+    <script>
+        function showStaffSection() {
+            const staffSection = document.getElementById('staff-section');
+            const carContainer = document.querySelector('.car-container');
+            const userPosts = document.querySelector('.user-posts');
+            
+            staffSection.style.display = 'block';
+            carContainer.style.display = 'none';
+            userPosts.style.display = 'none';
+            
+            // Прокрутка к секции администрации
+            setTimeout(() => {
+                staffSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+        
+        function hideStaffSection() {
+            const staffSection = document.getElementById('staff-section');
+            const carContainer = document.querySelector('.car-container');
+            const userPosts = document.querySelector('.user-posts');
+            
+            staffSection.style.display = 'none';
+            carContainer.style.display = 'block';
+            userPosts.style.display = 'block';
+            
+            // Прокрутка к началу страницы
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        
+        // Показываем секцию администрации при загрузке, если в URL есть #staff
+        window.addEventListener('DOMContentLoaded', function() {
+            if (window.location.hash === '#staff') {
+                showStaffSection();
+            }
+        });
+        
+        // Обработка изменения hash в URL
+        window.addEventListener('hashchange', function() {
+            if (window.location.hash === '#staff') {
+                showStaffSection();
+            } else {
+                hideStaffSection();
+            }
+        });
+        
+        // Фильтры
+        function applyFilters() {
+            const category = document.getElementById('categoryFilter').value;
+            const tag = document.getElementById('tagFilter').value;
+            const params = new URLSearchParams();
+            if (category) params.append('category', category);
+            if (tag) params.append('tag', tag);
+            window.location.href = '/?' + params.toString();
+        }
+        
+        // Избранное
+        let comparePosts = [];
+        function toggleFavorite(postId) {
+            fetch(`/toggle_favorite/${postId}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                }
+            });
+        }
+        
+        // Подписка
+        function toggleSubscription(authorEmail) {
+            fetch(`/toggle_subscription/${encodeURIComponent(authorEmail)}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                }
+            });
+        }
+        
+        // Жалоба
+        function reportPost(postId) {
+            const reason = prompt('Укажите причину жалобы:');
+            if (!reason) return;
+            
+            const formData = new FormData();
+            formData.append('target_type', 'post');
+            formData.append('target_id', postId);
+            formData.append('reason', reason);
+            
+            fetch('/report', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Жалоба отправлена модераторам');
+                } else {
+                    alert('Ошибка: ' + (data.error || 'Неизвестная ошибка'));
+                }
+            });
+        }
+        
+        // Сравнение
+        function addToCompare(postId) {
+            if (comparePosts.length === 0) {
+                comparePosts.push(postId);
+                alert('Первый автомобиль выбран. Выберите второй для сравнения.');
+            } else if (comparePosts.length === 1) {
+                comparePosts.push(postId);
+                window.location.href = `/compare?post1=${comparePosts[0]}&post2=${comparePosts[1]}`;
+            } else {
+                comparePosts = [postId];
+                alert('Выбран новый автомобиль. Выберите второй для сравнения.');
+            }
+        }
+    </script>
+</body>
+</html>

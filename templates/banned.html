@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Доступ запрещён</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            max-width: 500px;
+            width: 90%;
+        }
+        .icon {
+            font-size: 70px;
+            margin-bottom: 20px;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        h1 {
+            font-size: 28px;
+            margin: 0 0 20px 0;
+        }
+        p {
+            font-size: 16px;
+            margin: 10px 0;
+            line-height: 1.5;
+        }
+        .reason {
+            font-style: italic;
+            font-weight: 500;
+            color: #ffd700;
+            margin: 15px 0;
+        }
+        .btn {
+            margin-top: 25px;
+            padding: 12px 25px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn:hover {
+            background: #c0392b;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">🚫</div>
+        <h1>Доступ запрещён</h1>
+        <p><strong>Вы забанены администратором сайта car_site.</strong></p>
+        <p>До: <strong>{{ until }}</strong></p>
+        <p class="reason"> «{{ reason }}»</p>
+        <form action="{{ url_for('contact_admin') }}" method="post">
+            <input type="hidden" name="email" value="{{ email }}">
+            <button type="submit" class="btn">Связаться с администрацией этого сайта</button>
+        </form>
+        <div class="footer">
+            Если вы считаете, что это ошибка — свяжитесь с администратором.
+        </div>
+    </div>
+</body>
+</html>

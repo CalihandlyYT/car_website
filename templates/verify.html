@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Подтверждение</title>
+    <style>
+        body { font-family: Arial; text-align: center; margin-top: 50px; background: #f4f4f4; }
+        .form { display: inline-block; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        input { padding: 10px; margin: 10px 0; width: 100%; box-sizing: border-box; }
+        button { padding: 10px 20px; background: #111; color: white; border: none; cursor: pointer; }
+        button:hover { background: #333; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <div class="form">
+        <h2>📧Проверь терминал в VS Code!</h2>
+        <p>Мы отправили 6-значный код на <strong>{{ email }}</strong>.</p>
+        {% if error %}
+            <p class="error">{{ error }}</p>
+        {% endif %}
+        <form method="POST">
+            <input type="text" name="otp" placeholder="Введите код из терминала" required maxlength="6">
+            <button type="submit">Подтвердить</button>
+        </form>
+        <p><a href="{{ url_for('login') }}">← Изменить email</a></p>
+    </div>
+</body>
+</html>

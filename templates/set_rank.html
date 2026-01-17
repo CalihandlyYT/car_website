@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Изменить ранг</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .form-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 500px;
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .form-container h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1e3c72;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .user-info {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .user-info strong {
+            color: #667eea;
+            font-weight: 600;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .user-info .email {
+            font-size: 1.1rem;
+            color: #2c3e50;
+            word-break: break-all;
+        }
+        
+        .current-rank {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(0,0,0,0.1);
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.95rem;
+        }
+        
+        select {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            outline: none;
+            font-family: 'Inter', sans-serif;
+            background: white;
+        }
+        
+        select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        button[type="submit"],
+        .back-btn {
+            flex: 1;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            border: none;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        button[type="submit"] {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        button[type="submit"]:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.5);
+        }
+        
+        .back-btn {
+            background: #f0f0f0;
+            color: #2c3e50;
+        }
+        
+        .back-btn:hover {
+            background: #e0e0e0;
+            transform: translateY(-2px);
+        }
+        
+        .rank-badge {
+            display: inline-block;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h2>👑 Изменить ранг</h2>
+        
+        <div class="user-info">
+            <strong>Почта:</strong>
+            <span class="email">{{ email }}</span>
+            {% if current_rank %}
+            <div class="current-rank">
+                <strong>Текущий ранг:</strong>
+                <span class="rank-badge">{{ rank_names[current_rank] }}</span>
+            </div>
+            {% else %}
+            <div class="current-rank">
+                <strong>Текущий ранг:</strong>
+                <span style="color: #999;">Не назначен</span>
+            </div>
+            {% endif %}
+        </div>
+        
+        <form method="post">
+            <div class="form-group">
+                <label for="rank">Выберите новый ранг:</label>
+                <select name="rank" id="rank" required>
+                    <option value="">-- Выберите ранг --</option>
+                    {% for rank_key, rank_level in ranks.items()|sort(attribute='1', reverse=True) %}
+                    <option value="{{ rank_key }}" {% if current_rank == rank_key %}selected{% endif %}>
+                        {{ rank_names[rank_key] }} (Уровень {{ rank_level }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="reason">Причина изменения ранга:</label>
+                <textarea name="reason" id="reason" rows="3" placeholder="Укажите причину изменения ранга (обязательно для уведомления пользователя)" style="width: 100%; padding: 15px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 1rem; transition: all 0.3s; outline: none; font-family: 'Inter', sans-serif; resize: vertical;"></textarea>
+            </div>
+            
+            <div class="button-group">
+                <button type="submit">Изменить ранг</button>
+                <a href="{{ url_for('admin_panel') }}" class="back-btn">Отмена</a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
+

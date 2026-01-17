@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Изменение ранга</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 10000;
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        
+        .notification-container {
+            background: white;
+            border-radius: 25px;
+            padding: 50px 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            animation: slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        .notification-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .icon {
+            font-size: 5rem;
+            text-align: center;
+            margin-bottom: 25px;
+            animation: bounce 1s ease-in-out infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+        
+        .promotion .icon {
+            color: #11998e;
+        }
+        
+        .demotion .icon {
+            color: #f5576c;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .promotion h1 {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .demotion h1 {
+            background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .rank-change {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 25px;
+            border-radius: 15px;
+            margin: 25px 0;
+            border-left: 4px solid #667eea;
+            text-align: center;
+        }
+        
+        .promotion .rank-change {
+            border-left-color: #11998e;
+            background: linear-gradient(135deg, rgba(17, 153, 142, 0.1) 0%, rgba(56, 239, 125, 0.1) 100%);
+        }
+        
+        .demotion .rank-change {
+            border-left-color: #f5576c;
+            background: linear-gradient(135deg, rgba(245, 87, 108, 0.1) 0%, rgba(240, 147, 251, 0.1) 100%);
+        }
+        
+        .rank-change .old-rank {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 10px;
+            text-decoration: line-through;
+        }
+        
+        .rank-change .arrow {
+            font-size: 2rem;
+            color: #667eea;
+            margin: 10px 0;
+        }
+        
+        .promotion .rank-change .arrow {
+            color: #11998e;
+        }
+        
+        .demotion .rank-change .arrow {
+            color: #f5576c;
+        }
+        
+        .rank-change .new-rank {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e3c72;
+        }
+        
+        .promotion .rank-change .new-rank {
+            color: #11998e;
+        }
+        
+        .demotion .rank-change .new-rank {
+            color: #f5576c;
+        }
+        
+        .info-section {
+            margin: 25px 0;
+        }
+        
+        .info-item {
+            padding: 15px;
+            background: rgba(102, 126, 234, 0.05);
+            border-radius: 12px;
+            margin-bottom: 15px;
+            border-left: 3px solid #667eea;
+        }
+        
+        .info-item strong {
+            color: #667eea;
+            font-weight: 600;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .info-item .value {
+            color: #2c3e50;
+            font-size: 1.1rem;
+        }
+        
+        .reason-box {
+            background: rgba(243, 156, 18, 0.1);
+            border-left: 4px solid #f39c12;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+        
+        .reason-box strong {
+            color: #f39c12;
+            font-weight: 600;
+            display: block;
+            margin-bottom: 10px;
+        }
+        
+        .reason-box .reason-text {
+            color: #2c3e50;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+        
+        .close-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+            font-family: 'Inter', sans-serif;
+            margin-top: 30px;
+        }
+        
+        .close-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.6);
+        }
+        
+        .promotion .close-btn {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            box-shadow: 0 5px 20px rgba(17, 153, 142, 0.4);
+        }
+        
+        .promotion .close-btn:hover {
+            box-shadow: 0 8px 30px rgba(17, 153, 142, 0.6);
+        }
+        
+        .demotion .close-btn {
+            background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+            box-shadow: 0 5px 20px rgba(245, 87, 108, 0.4);
+        }
+        
+        .demotion .close-btn:hover {
+            box-shadow: 0 8px 30px rgba(245, 87, 108, 0.6);
+        }
+    </style>
+</head>
+<body>
+    <div class="notification-container {{ 'promotion' if is_promotion else 'demotion' }}">
+        <div class="icon">
+            {% if is_promotion %}
+                🎉
+            {% else %}
+                ⚠️
+            {% endif %}
+        </div>
+        
+        <h1>
+            {% if is_promotion %}
+                Поздравляем! Вас повысили!
+            {% else %}
+                Изменение ранга
+            {% endif %}
+        </h1>
+        
+        <div class="rank-change">
+            <div class="old-rank">{{ old_rank }}</div>
+            <div class="arrow">↓</div>
+            <div class="new-rank">{{ new_rank }}</div>
+        </div>
+        
+        <div class="info-section">
+            <div class="info-item">
+                <strong>👤 Изменил:</strong>
+                <span class="value">{{ changed_by }}</span>
+            </div>
+            <div class="info-item">
+                <strong>🕒 Дата изменения:</strong>
+                <span class="value">{{ changed_at }}</span>
+            </div>
+        </div>
+        
+        <div class="reason-box">
+            <strong>📝 Причина:</strong>
+            <div class="reason-text">{{ reason }}</div>
+        </div>
+        
+        <button class="close-btn" onclick="closeNotification()">Понятно</button>
+    </div>
+    
+    <script>
+        function closeNotification() {
+            // Отправляем запрос на сервер, чтобы отметить уведомление как просмотренное
+            fetch('/mark_rank_notification_seen', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(() => {
+                // Перенаправляем на главную страницу
+                window.location.href = '/';
+            })
+            .catch(err => {
+                console.error('Ошибка при закрытии уведомления:', err);
+                // Все равно перенаправляем на главную
+                window.location.href = '/';
+            });
+        }
+        
+        // Закрытие по Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeNotification();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Избранное</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .posts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .post-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .post-card img {
+            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .post-card h3 {
+            margin: 10px 0;
+        }
+        .post-meta {
+            color: #666;
+            font-size: 0.9em;
+            margin: 10px 0;
+        }
+        .post-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 50px;
+            background: white;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>⭐ Избранное</h1>
+        <a href="{{ url_for('index') }}" class="btn btn-primary">← Назад</a>
+    </div>
+    
+    {% if posts %}
+    <div class="posts-grid">
+        {% for post in posts %}
+        <div class="post-card">
+            <img src="{{ post.image }}" alt="{{ post.name }}">
+            <h3>{{ post.name }}</h3>
+            <div class="post-meta">
+                Автор: {{ post.author }}<br>
+                {{ post.created_at }}
+            </div>
+            <div class="post-actions">
+                <a href="{{ url_for('view_post', post_id=post.id) }}" class="btn btn-primary">Открыть</a>
+                <button onclick="toggleFavorite({{ post.id }})" class="btn btn-danger">Удалить из избранного</button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <h2>У вас пока нет избранных постов</h2>
+        <p>Добавьте посты в избранное, чтобы вернуться к ним позже</p>
+        <a href="{{ url_for('index') }}" class="btn btn-primary">Перейти к постам</a>
+    </div>
+    {% endif %}
+    
+    <script>
+        function toggleFavorite(postId) {
+            fetch(`/toggle_favorite/${postId}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                }
+            });
+        }
+    </script>
+</body>
+</html>
+
