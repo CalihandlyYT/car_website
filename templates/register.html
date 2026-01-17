@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Вход</title>
+    <title>Регистрация</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
         
@@ -67,7 +67,7 @@
             color: #2c3e50;
             font-size: 0.95rem;
         }
-
+        
         input[type="email"],
         input[type="password"] {
             width: 100%;
@@ -143,11 +143,12 @@
             color: #764ba2;
             text-decoration: underline;
         }
+        
     </style>
 </head>
 <body>
     <div class="form-container">
-        <h2>🔐 Вход</h2>
+        <h2>📝 Регистрация</h2>
         
         {% if error %}
             <div class="error">{{ error }}</div>
@@ -161,13 +162,18 @@
             
             <div class="form-group">
                 <label for="password">Пароль</label>
-                <input type="password" name="password" id="password" placeholder="Введите пароль" required>
+                <input type="password" name="password" id="password" placeholder="Введите пароль (минимум 6 символов)" required>
             </div>
             
-            <button type="submit">Войти</button>
+            <div class="form-group">
+                <label for="confirm_password">Подтвердите пароль</label>
+                <input type="password" name="confirm_password" id="confirm_password" placeholder="Повторите пароль" required>
+            </div>
+            
+            <button type="submit">Зарегистрироваться</button>
             
             <div class="register-link">
-                Нет аккаунта? <a href="{{ url_for('register') }}">Зарегистрироваться</a>
+                Уже есть аккаунт? <a href="{{ url_for('login') }}">Войти</a>
             </div>
         </form>
     </div>

@@ -1298,95 +1298,80 @@ def edit_post(post_id):
 def login():
     if request.method == 'POST':
         email = request.form['email']
-        login_method = request.form.get('login_method', 'otp')  # 'otp' или 'password'
         password = request.form.get('password', '')
+        
+        if not password:
+            return render_template('login.html', error="Введите пароль")
         
         user = get_user(email)
         
-        # Если пользователь не существует, создаем его
+        # Если пользователь не существует
         if not user:
-            create_user(email)
-            user = get_user(email)
+            return render_template('login.html', error="Пользователь не найден. Зарегистрируйтесь, пожалуйста.")
         
-        # Если выбран вход по паролю
-        if login_method == 'password':
-            if not password:
-                return render_template('login.html', error="Введите пароль")
-            
-            # Проверяем пароль
-            password_hash = hashlib.sha256(password.encode()).hexdigest()
-            stored_password = user.get('password') if user else None
-            
-            if not stored_password:
-                return render_template('login.html', error="Пароль не установлен. Используйте вход по OTP или установите пароль в профиле.")
-            
-            if password_hash != stored_password:
-                log_access(email, "НЕУДАЧНАЯ ПОПЫТКА ВХОДА (неверный пароль)", request.user_agent.string)
-                return render_template('login.html', error="Неверный пароль")
-            
-            # Проверяем бан перед входом
-            if is_user_banned(email):
-                reason = user['ban_reason'] if user and user['ban_reason'] else 'Не указана'
-                log_access(email, "ПОПЫТКА ВХОДА (временный бан)")
-                banned_until = datetime.fromisoformat(user['banned_until']) if user and user['banned_until'] else None
-                until = banned_until.strftime('%Y-%m-%d %H:%M:%S') if banned_until else 'навсегда'
-                return render_template('banned.html', email=email, until=until, reason=reason)
-            
-            if user['banned'] and not user['banned_until']:
-                reason = user['ban_reason'] if user['ban_reason'] else 'Не указана'
-                log_access(email, "ПОПЫТКА ВХОДА (постоянный бан)")
-                return render_template('banned.html', email=email, until='навсегда', reason=reason)
-            
-            # Успешный вход по паролю
-            session['email'] = email
-            update_user(email, verified=True, last_login=datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-            log_access(email, "УСПЕШНЫЙ ВХОД (по паролю)")
-            return redirect(url_for('index'))
+        # Проверяем пароль
+        password_hash = hashlib.sha256(password.encode()).hexdigest()
+        stored_password = user.get('password')
         
-        # Вход по OTP (старый способ)
-        else:
-            session['email'] = email
-            session['otp'] = generate_otp()
-            log_access(email, "НАЧАЛО ВХОДА (OTP)")
-            return redirect(url_for('verify'))
+        if not stored_password:
+            return render_template('login.html', error="Пароль не установлен. Зарегистрируйтесь, пожалуйста.")
+        
+        if password_hash != stored_password:
+            log_access(email, "НЕУДАЧНАЯ ПОПЫТКА ВХОДА (неверный пароль)", request.user_agent.string)
+            return render_template('login.html', error="Неверный пароль")
+        
+        # Проверяем бан перед входом
+        if is_user_banned(email):
+            reason = user['ban_reason'] if user and user['ban_reason'] else 'Не указана'
+            log_access(email, "ПОПЫТКА ВХОДА (временный бан)")
+            banned_until = datetime.fromisoformat(user['banned_until']) if user and user['banned_until'] else None
+            until = banned_until.strftime('%Y-%m-%d %H:%M:%S') if banned_until else 'навсегда'
+            return render_template('banned.html', email=email, until=until, reason=reason)
+        
+        if user['banned'] and not user['banned_until']:
+            reason = user['ban_reason'] if user['ban_reason'] else 'Не указана'
+            log_access(email, "ПОПЫТКА ВХОДА (постоянный бан)")
+            return render_template('banned.html', email=email, until='навсегда', reason=reason)
+        
+        # Успешный вход
+        session['email'] = email
+        update_user(email, verified=True, last_login=datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        log_access(email, "УСПЕШНЫЙ ВХОД")
+        return redirect(url_for('index'))
     
     return render_template('login.html')
 
-@app.route('/verify', methods=['GET', 'POST'])
-def verify():
-    email = session.get('email')
-    if not email:
-        return redirect(url_for('login'))
-
-    user_data = get_user(email)
-
-    # Проверяем временный бан
-    if is_user_banned(email):
-        reason = user_data['ban_reason'] if user_data and user_data['ban_reason'] else 'Не указана'
-        log_access(email, "ПОПЫТКА ВХОДА (временный бан)")
-        banned_until = datetime.fromisoformat(user_data['banned_until']) if user_data['banned_until'] else None
-        until = banned_until.strftime('%H:%M:%S') if banned_until else 'навсегда'
-        return render_template('banned.html', email=email, until=until, reason=reason)
-
-    # Постоянный бан
-    if user_data and user_data['banned'] and not user_data['banned_until']:
-        reason = user_data['ban_reason'] if user_data['ban_reason'] else 'Не указана'
-        log_access(email, "ПОПЫТКА ВХОДА (постоянный бан)")
-        return render_template('banned.html', email=email, until='навсегда', reason=reason)
-
-    # Обработка POST — ввод кода
+@app.route('/register', methods=['GET', 'POST'])
+def register():
     if request.method == 'POST':
-        entered_otp = request.form['otp']
-        if entered_otp == session.get('otp'):
-            update_user(email, verified=True, last_login=datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-            log_access(email, "УСПЕШНЫЙ ВХОД")
-            return redirect(url_for('index'))
-        else:
-            log_access(email, "ПОПЫТКА ВЗЛОМА", request.user_agent.string)
-            return render_template('verify.html', error="Неверный код. Проверь терминал.", email=email)
-
-    # Любой другой случай — показываем форму
-    return render_template('verify.html', email=email, error=None)
+        email = request.form['email']
+        password = request.form.get('password', '')
+        confirm_password = request.form.get('confirm_password', '')
+        
+        if not email or not password:
+            return render_template('register.html', error="Заполните все поля")
+        
+        if password != confirm_password:
+            return render_template('register.html', error="Пароли не совпадают")
+        
+        if len(password) < 6:
+            return render_template('register.html', error="Пароль должен содержать минимум 6 символов")
+        
+        # Проверяем, существует ли пользователь
+        user = get_user(email)
+        if user:
+            return render_template('register.html', error="Пользователь с таким email уже существует")
+        
+        # Создаем пользователя с паролем
+        create_user(email, password=password)
+        
+        # Автоматически входим
+        session['email'] = email
+        update_user(email, verified=True, last_login=datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        log_access(email, "РЕГИСТРАЦИЯ")
+        return redirect(url_for('index'))
+    
+    return render_template('register.html')
 
 @app.route('/logout')
 def logout():
@@ -2116,10 +2101,9 @@ def view_post(post_id):
     return render_template('post.html', post=post, comments=comments)
 
 # === ЗАПУСК ПРИЛОЖЕНИЯ ===
+#if __name__ == '__main__':
+#    init_db()  # Создаём БД при старте
+ #   app.run(debug=True, host='127.0.0.1', port=5000)
+
 if __name__ == '__main__':
-    init_db()  # Создаём БД при старте
-    app.run(debug=True, host='127.0.0.1', port=5000)
-
-
-
-
+    app.run
