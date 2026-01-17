@@ -582,10 +582,66 @@
         }
         
         footer {
+            background: rgba(30, 60, 114, 0.95);
+            color: white;
+            padding: 50px 20px 30px;
+            margin-top: 80px;
+            border-top: 3px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+        }
+        
+        .footer-column h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: white;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 10px;
+        }
+        
+        .footer-column ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .footer-column ul li {
+            margin-bottom: 12px;
+        }
+        
+        .footer-column a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            transition: all 0.3s;
+            display: inline-block;
+        }
+        
+        .footer-column a:hover {
+            color: white;
+            transform: translateX(5px);
+            text-decoration: underline;
+        }
+        
+        .footer-bottom {
             text-align: center;
-            margin: 50px 0 30px;
-            color: rgba(255,255,255,0.8);
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.6);
             font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .footer-container {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
         }
         
         @media (max-width: 768px) {
@@ -800,7 +856,33 @@
     </div>
 
     <footer>
-        © 2025 Авто-обзор | Создано с помощью Flask
+        <div class="footer-container">
+            <div class="footer-column">
+                <h3>О нас</h3>
+                <ul>
+                    <li><a href="{{ url_for('about') }}">О нас</a></li>
+                    <li><a href="{{ url_for('career') }}">Карьера</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h3>Помощь</h3>
+                <ul>
+                    <li><a href="#">Улучшить сайт</a></li>
+                    <li><a href="#">Связаться с нами</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h3>Правовая информация</h3>
+                <ul>
+                    <li><a href="#">Условия использования</a></li>
+                    <li><a href="#">Политика конфиденциальности</a></li>
+                    <li><a href="#">Политика использования файлов cookie</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            © 2025 Авто-обзор | Создано с помощью Flask
+        </div>
     </footer>
     
     <script>

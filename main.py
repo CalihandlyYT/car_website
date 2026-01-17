@@ -193,6 +193,18 @@ def init_db():
                 reviewed_at TEXT
             )
         """)
+        # Таблица заявок на карьеру
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS career_applications (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                email TEXT NOT NULL,
+                phone TEXT NOT NULL,
+                full_name TEXT NOT NULL,
+                bio TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                status TEXT DEFAULT 'pending'
+            )
+        """)
     if not os.path.exists("access.log"):
         with open("access.log", "w", encoding="utf-8") as f:
             f.write("=== ЛОГ ДОСТУПА К САЙТУ ЗАПУЩЕН ===\n")
@@ -1826,6 +1838,35 @@ def contact_admin():
         log_access(email, "ХОЧЕТ СВЯЗАТЬСЯ С АДМИНОМ", request.user_agent.string)
     return redirect(url_for('login'))
 
+@app.route('/about')
+def about():
+    """Страница 'О нас'"""
+    return render_template('about.html')
+
+@app.route('/career', methods=['GET', 'POST'])
+def career():
+    """Страница 'Карьера' с формой заявки"""
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip()
+        phone = request.form.get('phone', '').strip()
+        full_name = request.form.get('full_name', '').strip()
+        bio = request.form.get('bio', '').strip()
+        
+        if not email or not phone or not full_name or not bio:
+            return render_template('career.html', error="Заполните все поля")
+        
+        # Сохраняем заявку в базу данных
+        with sqlite3.connect(DATABASE) as conn:
+            conn.execute("""
+                INSERT INTO career_applications (email, phone, full_name, bio, created_at)
+                VALUES (?, ?, ?, ?, ?)
+            """, (email, phone, full_name, bio, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+        
+        log_access(email if email else "GUEST", "ПОДАЛ ЗАЯВКУ НА КАРЬЕРУ")
+        return render_template('career.html', success=True)
+    
+    return render_template('career.html')
+
 # === ПРОДАЖА АВТОМОБИЛЕЙ ===
 @app.route('/sales')
 def sales():
@@ -2103,8 +2144,7 @@ def view_post(post_id):
 # === ЗАПУСК ПРИЛОЖЕНИЯ ===
 #if __name__ == '__main__':
 #    init_db()  # Создаём БД при старте
- #   app.run(debug=True, host='127.0.0.1', port=5000)
+#app.run(debug=True, host='127.0.0.1', port=5000)
 
 if __name__ == '__main__':
     app.run()
-
