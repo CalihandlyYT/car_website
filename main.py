@@ -2166,6 +2166,14 @@ def view_post(post_id):
 def manifest():
     return send_from_directory('static', 'manifest.json', mimetype='application/manifest+json')
 
+@app.route('/favicon.ico')
+def favicon():
+    try:
+        return send_from_directory('static', 'favicon.ico', mimetype='image/x-icon')
+    except:
+        # Если favicon.ico не найден, используем PNG иконку
+        return send_from_directory('static', 'icon-192x192.png', mimetype='image/png')
+
 @app.route('/sw.js')
 def service_worker():
     return send_from_directory('static', 'sw.js', mimetype='application/javascript')
