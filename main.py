@@ -2157,9 +2157,9 @@ def view_post(post_id):
     return render_template('post.html', post=post, comments=comments)
 
 # === ЗАПУСК ПРИЛОЖЕНИЯ ===
-#if __name__ == '__main__':
- #   init_db()  # Создаём БД при старте
-#app.run(debug=True, host='127.0.0.1', port=5000)
+if __name__ == '__main__':
+   init_db()  # Создаём БД при старте
+app.run(debug=True, host='127.0.0.1', port=5000)
 
 # === PWA МАРШРУТЫ ===
 @app.route('/manifest.json')
@@ -2170,6 +2170,6 @@ def manifest():
 def service_worker():
     return send_from_directory('static', 'sw.js', mimetype='application/javascript')
 
-if __name__ == '__main__':
-    init_db()  # Создаём БД при старте
-    app.run(debug=True, host='0.0.0.0', port=5000)
+#if __name__ == '__main__':
+#    init_db()  # Создаём БД при старте
+ #   app.run(debug=True, host='0.0.0.0', port=5000)
