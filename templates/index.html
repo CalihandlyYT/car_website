@@ -67,9 +67,17 @@
             padding: 15px;
             flex-wrap: wrap;
             box-shadow: 0 2px 15px rgba(0,0,0,0.1);
-            position: sticky;
+            position: fixed;
             top: 0;
+            left: 0;
+            right: 0;
             z-index: 100;
+            transition: transform 0.3s ease-in-out;
+            transform: translateY(0);
+        }
+        
+        nav.hidden {
+            transform: translateY(-100%);
         }
         
         nav a {
@@ -294,6 +302,7 @@
             max-width: 1200px;
             margin: 30px auto;
             padding: 0 20px;
+            padding-top: 100px; /* Отступ для фиксированной навигации */
         }
         
         .car-container {
@@ -756,13 +765,14 @@
                 flex-wrap: wrap;
             }
             
-            nav a {
+            nav a, nav button {
                 padding: 8px 15px;
                 font-size: 0.85rem;
             }
             
             .container {
                 padding: 0 15px;
+                padding-top: 90px; /* Отступ для фиксированной навигации на мобильных */
             }
             
             .car-container {
@@ -1036,6 +1046,30 @@
     </footer>
     
     <script>
+        // Управление видимостью навигационной панели при скролле
+        let lastScrollTop = 0;
+        const nav = document.querySelector('nav');
+        const scrollThreshold = 10; // Минимальное расстояние скролла для срабатывания
+        
+        window.addEventListener('scroll', function() {
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            
+            // Если прокрутили меньше порога, не меняем состояние
+            if (Math.abs(scrollTop - lastScrollTop) < scrollThreshold) {
+                return;
+            }
+            
+            if (scrollTop > lastScrollTop && scrollTop > 100) {
+                // Скроллим вниз - скрываем панель
+                if (nav) nav.classList.add('hidden');
+            } else {
+                // Скроллим вверх - показываем панель
+                if (nav) nav.classList.remove('hidden');
+            }
+            
+            lastScrollTop = scrollTop <= 0 ? 0 : scrollTop; // Для мобильных устройств
+        }, false);
+        
         // Проверка изменений ранга при загрузке страницы
         function checkRankChange() {
             fetch('/check_rank_change')
