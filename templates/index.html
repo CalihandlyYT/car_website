@@ -902,11 +902,22 @@
         <!-- Текущий автомобиль -->
         <div class="car-container">
             <h1>{{ car.name }}</h1>
+            {% if car.image %}
             <div class="car-image-container" onclick="openImageModal('{{ car.image }}', '{{ car.name }}')">
                 <img src="{{ car.image }}" alt="{{ car.name }}" class="car-image" 
-                     onerror="this.onerror=null; this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png'; this.style.opacity='0.5';" 
-                     loading="lazy">
+                     onerror="handleCarImageError(this, '{{ car.image }}')" 
+                     onload="handleCarImageLoad(this)"
+                     loading="lazy"
+                     crossorigin="anonymous">
             </div>
+            {% else %}
+            <div class="car-image-container">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png" 
+                     alt="Изображение недоступно" 
+                     class="car-image" 
+                     style="opacity: 0.5;">
+            </div>
+            {% endif %}
             
             <!-- Модальное окно для полноразмерного изображения -->
             <div id="imageModal" class="image-modal" onclick="closeImageModal()">
@@ -1308,6 +1319,25 @@
             }
         }
         
+        // Обработка ошибок загрузки изображений автомобилей
+        function handleCarImageError(img, originalSrc) {
+            console.warn('Ошибка загрузки изображения автомобиля:', originalSrc);
+            const placeholderUrl = 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png';
+            if (img.src !== placeholderUrl && !img.src.includes('No_image_available')) {
+                img.onerror = null; // Предотвращаем бесконечный цикл
+                img.src = placeholderUrl;
+                img.style.opacity = '0.5';
+                img.style.maxHeight = '400px';
+                img.style.objectFit = 'contain';
+            }
+        }
+        
+        // Обработка успешной загрузки изображения автомобиля
+        function handleCarImageLoad(img) {
+            img.style.opacity = '1';
+            console.log('Изображение автомобиля успешно загружено:', img.src);
+        }
+        
         // Модальное окно для изображения автомобиля
         function openImageModal(imageSrc, imageAlt) {
             const modal = document.getElementById('imageModal');
@@ -1318,6 +1348,7 @@
                 modalImg.alt = imageAlt;
                 // Обработка ошибок для модального окна
                 modalImg.onerror = function() {
+                    console.warn('Ошибка загрузки изображения в модальном окне:', imageSrc);
                     this.src = 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png';
                     this.style.opacity = '0.5';
                 };
@@ -1330,6 +1361,17 @@
                 modal.style.display = 'none';
             }
         }
+        
+        // Отладочная информация при загрузке страницы
+        window.addEventListener('DOMContentLoaded', function() {
+            const carImage = document.querySelector('.car-image');
+            if (carImage) {
+                console.log('Найдено изображение автомобиля:', carImage.src);
+                console.log('Альтернативный текст:', carImage.alt);
+            } else {
+                console.warn('Изображение автомобиля не найдено на странице');
+            }
+        });
         
         // Закрытие модального окна по нажатию Escape
         document.addEventListener('keydown', function(event) {

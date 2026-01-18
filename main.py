@@ -1112,6 +1112,12 @@ def index():
     log_access(email, "ДОСТУП РАЗРЕШЕН")
     selected_car = request.args.get('car', 'bmw_m5_f90')
     car_data = cars.get(selected_car, cars['bmw_m5_f90'])
+    
+    # Отладочная информация (можно убрать после проверки)
+    if not car_data.get('image'):
+        print(f"ВНИМАНИЕ: У автомобиля {car_data.get('name', 'Unknown')} нет изображения!")
+    else:
+        print(f"Автомобиль {car_data.get('name', 'Unknown')} имеет изображение: {car_data.get('image')}")
 
     # Фильтрация по тегам и категориям
     tag_filter = request.args.get('tag')
@@ -2157,9 +2163,9 @@ def view_post(post_id):
     return render_template('post.html', post=post, comments=comments)
 
 # === ЗАПУСК ПРИЛОЖЕНИЯ ===
-#if __name__ == '__main__':
- #  init_db()  # Создаём БД при старте
-#app.run(debug=True, host='127.0.0.1', port=5000)
+#f __name__ == '__main__':
+# init_db()  # Создаём БД при старте
+#pp.run(debug=True, host='127.0.0.1', port=5000)
 
 # === PWA МАРШРУТЫ ===
 @app.route('/manifest.json')
