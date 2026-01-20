@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ lang }}">
+<html lang="{{ lang if lang else 'ru' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -16,7 +16,7 @@
     <link rel="shortcut icon" href="{{ url_for('favicon') }}">
     <link rel="apple-touch-icon" sizes="192x192" href="{{ url_for('static', filename='icon-192x192.png') }}">
     <link rel="apple-touch-icon" sizes="152x152" href="{{ url_for('static', filename='icon-152x152.png') }}">
-    <title>{{ t('rating_amg_m_cars', lang) }}</title>
+    <title>{% if lang and t %}{{ t('rating_amg_m_cars', lang) }}{% else %}Рейтинг AMG и M-автомобилей{% endif %}</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
         
@@ -892,7 +892,7 @@
 </head>
 <body>
     <header>
-        <h1>🏎️ {{ t('best_amg_m_cars', lang) }}</h1>
+        <h1>🏎️ {% if lang and t %}{{ t('best_amg_m_cars', lang) }}{% else %}Лучшие AMG и M-автомобили{% endif %}</h1>
     </header>
     <nav>
         <!-- Селектор языка -->
@@ -917,25 +917,25 @@
             <a href="/?car={{ key }}" class="{{ 'active' if selected == key else '' }}">{{ car.name }}</a>
         {% endfor %}
         <!-- Новые функции -->
-        <a href="{{ url_for('favorites') }}" class="profile-btn">{{ t('favorites', lang) }}</a>
-        <a href="{{ url_for('subscriptions') }}" class="profile-btn">{{ t('subscriptions', lang) }}</a>
+        <a href="{{ url_for('favorites') }}" class="profile-btn">{% if lang and t %}{{ t('favorites', lang) }}{% else %}⭐ Избранное{% endif %}</a>
+        <a href="{{ url_for('subscriptions') }}" class="profile-btn">{% if lang and t %}{{ t('subscriptions', lang) }}{% else %}📬 Подписки{% endif %}</a>
         <a href="{{ url_for('notifications') }}" class="profile-btn">
-            {{ t('notifications', lang) }}
+            {% if lang and t %}{{ t('notifications', lang) }}{% else %}🔔 Уведомления{% endif %}
             {% if unread_notifications > 0 %}
             <span style="background: #f5576c; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.8em; margin-left: 5px;">{{ unread_notifications }}</span>
             {% endif %}
         </a>
-        <a href="{{ url_for('compare_posts') }}" class="profile-btn">{{ t('compare', lang) }}</a>
+        <a href="{{ url_for('compare_posts') }}" class="profile-btn">{% if lang and t %}{{ t('compare', lang) }}{% else %}🔍 Сравнить{% endif %}</a>
         <!-- Продажа -->
-        <a href="{{ url_for('sales') }}" class="sales-btn">{{ t('sales', lang) }}</a>
+        <a href="{{ url_for('sales') }}" class="sales-btn">{% if lang and t %}{{ t('sales', lang) }}{% else %}🚗 Продажа{% endif %}</a>
         <!-- Администрация -->
-        <a href="#staff" class="staff-btn" onclick="event.preventDefault(); showStaffSection(); window.location.hash = 'staff'; return false;">{{ t('administration', lang) }}</a>
+        <a href="#staff" class="staff-btn" onclick="event.preventDefault(); showStaffSection(); window.location.hash = 'staff'; return false;">{% if lang and t %}{{ t('administration', lang) }}{% else %}👑 Администрация{% endif %}</a>
         <!-- Профиль -->
-        <a href="{{ url_for('profile') }}" class="profile-btn">{{ t('profile', lang) }}</a>
+        <a href="{{ url_for('profile') }}" class="profile-btn">{% if lang and t %}{{ t('profile', lang) }}{% else %}👤 Профиль{% endif %}</a>
         <!-- Кнопка установки PWA (постоянная) -->
-        <a href="#" id="installButton" class="install-btn" onclick="event.preventDefault(); installPWA(); return false;">{{ t('install', lang) }}</a>
+        <a href="#" id="installButton" class="install-btn" onclick="event.preventDefault(); installPWA(); return false;">{% if lang and t %}{{ t('install', lang) }}{% else %}📱 Установить{% endif %}</a>
         <!-- Кнопка выхода -->
-        <a href="{{ url_for('logout') }}" class="logout-btn">{{ t('logout', lang) }}</a>
+        <a href="{{ url_for('logout') }}" class="logout-btn">{% if lang and t %}{{ t('logout', lang) }}{% else %}Выйти{% endif %}</a>
     </nav>
     
     <!-- Фильтры -->
@@ -943,18 +943,18 @@
         <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
             <strong>{% if lang and t %}{{ t('filters', lang) }}{% else %}Фильтры:{% endif %}</strong>
             <select id="categoryFilter" onchange="applyFilters()" style="padding: 8px 15px; border: 2px solid #e0e0e0; border-radius: 8px;">
-                <option value="">{{ t('all_categories', lang) }}</option>
+                <option value="">{% if lang and t %}{{ t('all_categories', lang) }}{% else %}Все категории{% endif %}</option>
                 {% for cat in categories %}
                 <option value="{{ cat }}" {{ 'selected' if category_filter == cat else '' }}>{{ cat|title }}</option>
                 {% endfor %}
             </select>
             <select id="tagFilter" onchange="applyFilters()" style="padding: 8px 15px; border: 2px solid #e0e0e0; border-radius: 8px;">
-                <option value="">{{ t('all_tags', lang) }}</option>
+                <option value="">{% if lang and t %}{{ t('all_tags', lang) }}{% else %}Все теги{% endif %}</option>
                 {% for tag in all_tags %}
                 <option value="{{ tag }}" {{ 'selected' if tag_filter == tag else '' }}>{{ tag }}</option>
                 {% endfor %}
             </select>
-            <a href="{{ url_for('index') }}" style="padding: 8px 15px; background: #f5576c; color: white; text-decoration: none; border-radius: 8px;">{{ t('reset', lang) }}</a>
+            <a href="{{ url_for('index') }}" style="padding: 8px 15px; background: #f5576c; color: white; text-decoration: none; border-radius: 8px;">{% if lang and t %}{{ t('reset', lang) }}{% else %}Сбросить{% endif %}</a>
         </div>
     </div>
 
