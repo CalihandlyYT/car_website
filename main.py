@@ -1325,7 +1325,7 @@ def login():
         
         # Если пользователь не существует
         if not user:
-            return render_template('login.html', error="Пользователь не найден. Зарегистрируйтесь пожалуйста')
+            return render_template('login.html', error="Пользователь не найден. Зарегистрируйтесь пожалуйста.")
         
         # Проверяем пароль
         password_hash = hashlib.sha256(password.encode()).hexdigest()
@@ -2185,5 +2185,9 @@ def service_worker():
     return send_from_directory('static', 'sw.js', mimetype='application/javascript')
 
 if __name__ == '__main__':
-    init_db()  # Создаём БД при старте
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    try:
+        init_db()  # Создаём БД при старте
+        app.run(debug=False, host='0.0.0.0', port=8000)
+    except Exception as e:
+        print(f"Ошибка при запуске приложения: {e}")
+        raise
