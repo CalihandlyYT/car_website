@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="{{ lang }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -16,7 +16,7 @@
     <link rel="shortcut icon" href="{{ url_for('favicon') }}">
     <link rel="apple-touch-icon" sizes="192x192" href="{{ url_for('static', filename='icon-192x192.png') }}">
     <link rel="apple-touch-icon" sizes="152x152" href="{{ url_for('static', filename='icon-152x152.png') }}">
-    <title>Рейтинг AMG и M-автомобилей</title>
+    <title>{{ t('rating_amg_m_cars', lang) }}</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
         
@@ -80,6 +80,72 @@
             z-index: 100;
             transition: transform 0.3s ease-in-out;
             transform: translateY(0);
+        }
+        
+        .language-selector {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            z-index: 101;
+        }
+        
+        .language-btn {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .language-btn:hover {
+            background: #667eea;
+            border-color: #667eea;
+            color: white;
+            transform: scale(1.05);
+        }
+        
+        .language-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 5px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            display: none;
+            flex-direction: column;
+            min-width: 150px;
+            overflow: hidden;
+        }
+        
+        .language-dropdown.show {
+            display: flex;
+        }
+        
+        .language-option {
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .language-option:hover {
+            background: #f0f0f0;
+        }
+        
+        .language-option.active {
+            background: #667eea;
+            color: white;
         }
         
         nav.hidden {
@@ -825,52 +891,69 @@
 </head>
 <body>
     <header>
-        <h1>🏎️ Лучшие AMG и M-автомобили</h1>
+        <h1>🏎️ {{ t('best_amg_m_cars', lang) }}</h1>
     </header>
     <nav>
+        <!-- Селектор языка -->
+        <div class="language-selector">
+            <button class="language-btn" onclick="toggleLanguageDropdown()" title="Выбрать язык">
+                🌐
+            </button>
+            <div class="language-dropdown" id="languageDropdown">
+                <div class="language-option {{ 'active' if lang == 'ru' else '' }}" onclick="setLanguage('ru')">
+                    <span>🇷🇺</span>
+                    <span>Русский</span>
+                </div>
+                <div class="language-option {{ 'active' if lang == 'en' else '' }}" onclick="setLanguage('en')">
+                    <span>🇬🇧</span>
+                    <span>English</span>
+                </div>
+            </div>
+        </div>
+        
         <!-- Вкладки автомобилей -->
         {% for key, car in cars.items() %}
             <a href="/?car={{ key }}" class="{{ 'active' if selected == key else '' }}">{{ car.name }}</a>
         {% endfor %}
         <!-- Новые функции -->
-        <a href="{{ url_for('favorites') }}" class="profile-btn">⭐ Избранное</a>
-        <a href="{{ url_for('subscriptions') }}" class="profile-btn">📬 Подписки</a>
+        <a href="{{ url_for('favorites') }}" class="profile-btn">{{ t('favorites', lang) }}</a>
+        <a href="{{ url_for('subscriptions') }}" class="profile-btn">{{ t('subscriptions', lang) }}</a>
         <a href="{{ url_for('notifications') }}" class="profile-btn">
-            🔔 Уведомления
+            {{ t('notifications', lang) }}
             {% if unread_notifications > 0 %}
             <span style="background: #f5576c; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.8em; margin-left: 5px;">{{ unread_notifications }}</span>
             {% endif %}
         </a>
-        <a href="{{ url_for('compare_posts') }}" class="profile-btn">🔍 Сравнить</a>
+        <a href="{{ url_for('compare_posts') }}" class="profile-btn">{{ t('compare', lang) }}</a>
         <!-- Продажа -->
-        <a href="{{ url_for('sales') }}" class="sales-btn">🚗 Продажа</a>
+        <a href="{{ url_for('sales') }}" class="sales-btn">{{ t('sales', lang) }}</a>
         <!-- Администрация -->
-        <a href="#staff" class="staff-btn" onclick="event.preventDefault(); showStaffSection(); window.location.hash = 'staff'; return false;">👑 Администрация</a>
+        <a href="#staff" class="staff-btn" onclick="event.preventDefault(); showStaffSection(); window.location.hash = 'staff'; return false;">{{ t('administration', lang) }}</a>
         <!-- Профиль -->
-        <a href="{{ url_for('profile') }}" class="profile-btn">👤 Профиль</a>
+        <a href="{{ url_for('profile') }}" class="profile-btn">{{ t('profile', lang) }}</a>
         <!-- Кнопка выхода -->
-        <a href="{{ url_for('logout') }}" class="logout-btn">Выйти</a>
+        <a href="{{ url_for('logout') }}" class="logout-btn">{{ t('logout', lang) }}</a>
         <!-- Кнопка установки PWA -->
-        <button id="installButton" class="install-btn">📱 Установить</button>
+        <button id="installButton" class="install-btn">{{ t('install', lang) }}</button>
     </nav>
     
     <!-- Фильтры -->
     <div style="background: rgba(255, 255, 255, 0.95); padding: 15px; margin: 20px auto; max-width: 1200px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
         <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
-            <strong>Фильтры:</strong>
+            <strong>{{ t('filters', lang) }}</strong>
             <select id="categoryFilter" onchange="applyFilters()" style="padding: 8px 15px; border: 2px solid #e0e0e0; border-radius: 8px;">
-                <option value="">Все категории</option>
+                <option value="">{{ t('all_categories', lang) }}</option>
                 {% for cat in categories %}
                 <option value="{{ cat }}" {{ 'selected' if category_filter == cat else '' }}>{{ cat|title }}</option>
                 {% endfor %}
             </select>
             <select id="tagFilter" onchange="applyFilters()" style="padding: 8px 15px; border: 2px solid #e0e0e0; border-radius: 8px;">
-                <option value="">Все теги</option>
+                <option value="">{{ t('all_tags', lang) }}</option>
                 {% for tag in all_tags %}
                 <option value="{{ tag }}" {{ 'selected' if tag_filter == tag else '' }}>{{ tag }}</option>
                 {% endfor %}
             </select>
-            <a href="{{ url_for('index') }}" style="padding: 8px 15px; background: #f5576c; color: white; text-decoration: none; border-radius: 8px;">Сбросить</a>
+            <a href="{{ url_for('index') }}" style="padding: 8px 15px; background: #f5576c; color: white; text-decoration: none; border-radius: 8px;">{{ t('reset', lang) }}</a>
         </div>
     </div>
 
@@ -1370,6 +1453,27 @@
                 console.log('Альтернативный текст:', carImage.alt);
             } else {
                 console.warn('Изображение автомобиля не найдено на странице');
+            }
+        });
+        
+        // Переключение языка
+        function toggleLanguageDropdown() {
+            const dropdown = document.getElementById('languageDropdown');
+            if (dropdown) {
+                dropdown.classList.toggle('show');
+            }
+        }
+        
+        function setLanguage(lang) {
+            window.location.href = '/set_language/' + lang;
+        }
+        
+        // Закрытие dropdown при клике вне его
+        document.addEventListener('click', function(event) {
+            const selector = document.querySelector('.language-selector');
+            const dropdown = document.getElementById('languageDropdown');
+            if (selector && dropdown && !selector.contains(event.target)) {
+                dropdown.classList.remove('show');
             }
         });
         

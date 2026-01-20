@@ -1325,7 +1325,7 @@ def login():
         
         # Если пользователь не существует
         if not user:
-            return render_template('login.html', error="Пользователь не найден. Зарегистрируйтесь, пожалуйста.")
+            return render_template('login.html', error="Пользователь не найден. Зарегистрируйтесь пожалуйста')
         
         # Проверяем пароль
         password_hash = hashlib.sha256(password.encode()).hexdigest()
