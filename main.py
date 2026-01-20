@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import os
 import sqlite3
 import hashlib
+from translations import get_translation
 
 app = Flask(__name__, static_folder='static')
 app.config['DEBUG'] = True
@@ -1147,11 +1148,14 @@ def index():
     
     # Получаем количество непрочитанных уведомлений
     unread_count = get_unread_notifications_count(email)
+    
+    # Получаем текущий язык
+    current_lang = session.get('language', 'ru')
 
     return render_template('index.html', car=car_data, cars=cars, selected=selected_car, posts=posts, 
                          search_query=search_query, staff_list=staff_list, all_tags=all_tags, 
                          categories=CATEGORIES, tag_filter=tag_filter, category_filter=category_filter,
-                         unread_notifications=unread_count)
+                         unread_notifications=unread_count, lang=current_lang, t=get_translation)
 
 @app.route('/create_post', methods=['GET', 'POST'])
 def create_post_route():
@@ -2183,6 +2187,14 @@ def favicon():
 @app.route('/sw.js')
 def service_worker():
     return send_from_directory('static', 'sw.js', mimetype='application/javascript')
+
+# === ПЕРЕКЛЮЧЕНИЕ ЯЗЫКА ===
+@app.route('/set_language/<lang>')
+def set_language(lang):
+    """Установить язык интерфейса"""
+    if lang in ['ru', 'en']:
+        session['language'] = lang
+    return redirect(request.referrer or url_for('index'))
 
 if __name__ == '__main__':
     try:

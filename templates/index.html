@@ -242,7 +242,8 @@
             transition: all 0.3s;
             font-family: 'Inter', sans-serif;
             font-size: 0.95rem;
-            display: none;
+            display: inline-block;
+            text-decoration: none;
         }
         
         .install-btn:hover {
@@ -931,16 +932,16 @@
         <a href="#staff" class="staff-btn" onclick="event.preventDefault(); showStaffSection(); window.location.hash = 'staff'; return false;">{{ t('administration', lang) }}</a>
         <!-- Профиль -->
         <a href="{{ url_for('profile') }}" class="profile-btn">{{ t('profile', lang) }}</a>
+        <!-- Кнопка установки PWA (постоянная) -->
+        <a href="#" id="installButton" class="install-btn" onclick="event.preventDefault(); installPWA(); return false;">{{ t('install', lang) }}</a>
         <!-- Кнопка выхода -->
         <a href="{{ url_for('logout') }}" class="logout-btn">{{ t('logout', lang) }}</a>
-        <!-- Кнопка установки PWA -->
-        <button id="installButton" class="install-btn">{{ t('install', lang) }}</button>
     </nav>
     
     <!-- Фильтры -->
     <div style="background: rgba(255, 255, 255, 0.95); padding: 15px; margin: 20px auto; max-width: 1200px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
         <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
-            <strong>{{ t('filters', lang) }}</strong>
+            <strong>{% if lang and t %}{{ t('filters', lang) }}{% else %}Фильтры:{% endif %}</strong>
             <select id="categoryFilter" onchange="applyFilters()" style="padding: 8px 15px; border: 2px solid #e0e0e0; border-radius: 8px;">
                 <option value="">{{ t('all_categories', lang) }}</option>
                 {% for cat in categories %}
@@ -1511,43 +1512,30 @@
         let deferredPrompt;
         const installButton = document.getElementById('installButton');
         
-        window.addEventListener('beforeinstallprompt', (e) => {
-            // Предотвращаем автоматическое отображение подсказки
-            e.preventDefault();
-            // Сохраняем событие для последующего использования
-            deferredPrompt = e;
-            // Показываем кнопку установки
-            if (installButton) {
-                installButton.style.display = 'block';
+        // Функция установки PWA
+        async function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`User response to the install prompt: ${outcome}`);
+                deferredPrompt = null;
+            } else {
+                // Если промпт недоступен, показываем инструкции
+                alert('Для установки приложения используйте меню браузера:\n\nChrome: меню (⋮) → "Установить приложение"\nSafari: кнопка "Поделиться" → "На экран «Домой»"');
             }
-        });
-        
-        if (installButton) {
-            installButton.addEventListener('click', async () => {
-                if (deferredPrompt) {
-                    // Показываем подсказку установки
-                    deferredPrompt.prompt();
-                    // Ждем ответа пользователя
-                    const { outcome } = await deferredPrompt.userChoice;
-                    console.log(`User response to the install prompt: ${outcome}`);
-                    // Очищаем сохраненное событие
-                    deferredPrompt = null;
-                    // Скрываем кнопку
-                    installButton.style.display = 'none';
-                }
-            });
         }
         
-        // Скрываем кнопку, если приложение уже установлено
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+        });
+        
         window.addEventListener('appinstalled', () => {
             console.log('PWA was installed');
-            if (installButton) {
-                installButton.style.display = 'none';
-            }
             deferredPrompt = null;
         });
         
-        // Проверяем, установлено ли приложение
+        // Скрываем кнопку, если приложение уже установлено
         if (window.matchMedia('(display-mode: standalone)').matches) {
             if (installButton) {
                 installButton.style.display = 'none';
