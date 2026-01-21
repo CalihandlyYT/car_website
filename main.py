@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import os
 import sqlite3
 import hashlib
+import json
 from translations import get_translation
 
 app = Flask(__name__, static_folder='static')
@@ -400,11 +401,21 @@ def create_user(email, rank=None, password=None):
         password_hash = hashlib.sha256(password.encode()).hexdigest()
     
     with sqlite3.connect(DATABASE) as conn:
+        # Проверяем, существует ли колонка theme
+        try:
+            conn.execute("SELECT theme FROM users LIMIT 1")
+        except sqlite3.OperationalError:
+            # Колонка не существует, добавляем её
+            try:
+                conn.execute("ALTER TABLE users ADD COLUMN theme TEXT DEFAULT 'light'")
+            except:
+                pass
+        
         conn.execute("""
             INSERT INTO users (email, verified, banned, banned_until, ban_reason, last_login, rank, 
-                              rank_changed_by, rank_change_reason, rank_changed_at, old_rank, rank_notification_seen, password)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (email, False, False, None, None, None, rank, None, None, None, None, True, password_hash))
+                              rank_changed_by, rank_change_reason, rank_changed_at, old_rank, rank_notification_seen, password, theme)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (email, False, False, None, None, None, rank, None, None, None, None, True, password_hash, 'light'))
 
 def update_user(email, **kwargs):
     fields = ", ".join([f"{key} = ?" for key in kwargs])
@@ -1027,7 +1038,6 @@ def get_top_authors(limit=10):
 # === РАБОТА С СОХРАНЕННЫМИ ПОИСКАМИ ===
 def save_search(user_email, search_name, search_params):
     with sqlite3.connect(DATABASE) as conn:
-        import json
         conn.execute("""
             INSERT INTO saved_searches (user_email, search_name, search_params, created_at)
             VALUES (?, ?, ?, ?)
@@ -2629,9 +2639,9 @@ def view_post(post_id):
                          t=get_translation, user_theme=user_theme)
 
 # === ЗАПУСК ПРИЛОЖЕНИЯ ===
-#f __name__ == '__main__':
-# init_db()  # Создаём БД при старте
-#pp.run(debug=True, host='127.0.0.1', port=5000)
+#if __name__ == '__main__':
+ #init_db()  # Создаём БД при старте
+#app.run(debug=True, host='127.0.0.1', port=5000)
 
 # === PWA МАРШРУТЫ ===
 @app.route('/manifest.json')
@@ -2649,6 +2659,263 @@ def favicon():
 @app.route('/sw.js')
 def service_worker():
     return send_from_directory('static', 'sw.js', mimetype='application/javascript')
+
+# === ПЕРЕКЛЮЧЕНИЕ ТЕМЫ ===
+@app.route('/set_theme/<theme>', methods=['POST'])
+def set_theme(theme):
+    email = session.get('email')
+    if email and theme in ['light', 'dark']:
+        set_user_theme(email, theme)
+        return jsonify({'success': True})
+    return jsonify({'success': False}), 400
+
+# === ПОПУЛЯРНЫЕ ПОСТЫ ===
+@app.route('/popular_posts')
+def popular_posts():
+    email = session.get('email')
+    if not email:
+        return redirect(url_for('login'))
+    
+    sort_by = request.args.get('sort', 'views')
+    posts = get_popular_posts(limit=20, sort_by=sort_by)
+    
+    current_lang = session.get('language', 'ru')
+    user_theme = get_user_theme(email)
+    
+    return render_template('popular_posts.html', posts=posts, sort_by=sort_by, 
+                         lang=current_lang, t=get_translation, user_theme=user_theme)
+
+# === ИСТОРИЯ ПРОСМОТРОВ ===
+@app.route('/view_history')
+def view_history():
+    email = session.get('email')
+    if not email:
+        return redirect(url_for('login'))
+    
+    history = get_view_history(email)
+    recommendations = get_recommendations(email)
+    
+    current_lang = session.get('language', 'ru')
+    user_theme = get_user_theme(email)
+    
+    return render_template('view_history.html', history=history, recommendations=recommendations,
+                         lang=current_lang, t=get_translation, user_theme=user_theme)
+
+# === ОБСУЖДЕНИЯ ===
+@app.route('/discussions')
+def discussions():
+    email = session.get('email')
+    if not email:
+        return redirect(url_for('login'))
+    
+    category = request.args.get('category')
+    discussions_list = get_discussions(category=category)
+    
+    current_lang = session.get('language', 'ru')
+    user_theme = get_user_theme(email)
+    
+    return render_template('discussions.html', discussions=discussions_list, category=category,
+                         lang=current_lang, t=get_translation, user_theme=user_theme)
+
+@app.route('/discussion/<int:discussion_id>')
+def discussion_detail(discussion_id):
+    email = session.get('email')
+    if not email:
+        return redirect(url_for('login'))
+    
+    discussion = get_discussion_by_id(discussion_id)
+    if not discussion:
+        return redirect(url_for('discussions'))
+    
+    replies = get_discussion_replies(discussion_id)
+    
+    current_lang = session.get('language', 'ru')
+    user_theme = get_user_theme(email)
+    
+    return render_template('discussion_detail.html', discussion=discussion, replies=replies,
+                         lang=current_lang, t=get_translation, user_theme=user_theme)
+
+@app.route('/create_discussion', methods=['GET', 'POST'])
+def create_discussion_route():
+    email = session.get('email')
+    if not email:
+        return redirect(url_for('login'))
+    
+    if request.method == 'POST':
+        title = request.form.get('title')
+        content = request.form.get('content')
+        category = request.form.get('category')
+        
+        if title and content:
+            discussion_id = create_discussion(title, content, email, category)
+            return redirect(url_for('discussion_detail', discussion_id=discussion_id))
+    
+    current_lang = session.get('language', 'ru')
+    user_theme = get_user_theme(email)
+    
+    return render_template('create_discussion.html', lang=current_lang, t=get_translation, user_theme=user_theme)
+
+@app.route('/add_discussion_reply/<int:discussion_id>', methods=['POST'])
+def add_discussion_reply_route(discussion_id):
+    email = session.get('email')
+    if not email:
+        return jsonify({'success': False}), 403
+    
+    content = request.form.get('content')
+    if content:
+        add_discussion_reply(discussion_id, email, content)
+        return redirect(url_for('discussion_detail', discussion_id=discussion_id))
+    
+    return redirect(url_for('discussions'))
+
+# === ЛИЧНЫЕ СООБЩЕНИЯ ===
+@app.route('/messages')
+def messages():
+    email = session.get('email')
+    if not email:
+        return redirect(url_for('login'))
+    
+    folder = request.args.get('folder', 'inbox')
+    messages_list = get_messages(email, folder)
+    unread_count = get_unread_messages_count(email)
+    
+    current_lang = session.get('language', 'ru')
+    user_theme = get_user_theme(email)
+    
+    return render_template('messages.html', messages=messages_list, folder=folder, 
+                         unread_count=unread_count, lang=current_lang, t=get_translation, user_theme=user_theme)
+
+@app.route('/send_message', methods=['GET', 'POST'])
+def send_message_route():
+    email = session.get('email')
+    if not email:
+        return redirect(url_for('login'))
+    
+    if request.method == 'POST':
+        recipient_email = request.form.get('recipient_email')
+        subject = request.form.get('subject')
+        content = request.form.get('content')
+        
+        if recipient_email and content:
+            send_message(email, recipient_email, subject, content)
+            return redirect(url_for('messages', folder='sent'))
+    
+    recipient = request.args.get('recipient')
+    current_lang = session.get('language', 'ru')
+    user_theme = get_user_theme(email)
+    
+    return render_template('send_message.html', recipient=recipient, lang=current_lang, 
+                         t=get_translation, user_theme=user_theme)
+
+@app.route('/message/<int:message_id>')
+def view_message(message_id):
+    email = session.get('email')
+    if not email:
+        return redirect(url_for('login'))
+    
+    with sqlite3.connect(DATABASE) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM messages WHERE id = ?", (message_id,))
+        row = cur.fetchone()
+        message = dict(row) if row else None
+    
+    if not message or (message['recipient_email'] != email and message['sender_email'] != email):
+        return redirect(url_for('messages'))
+    
+    if message['recipient_email'] == email:
+        mark_message_read(message_id, email)
+    
+    current_lang = session.get('language', 'ru')
+    user_theme = get_user_theme(email)
+    
+    return render_template('view_message.html', message=message, lang=current_lang, 
+                         t=get_translation, user_theme=user_theme)
+
+# === РАСШИРЕННЫЙ ПОИСК ===
+@app.route('/advanced_search', methods=['GET', 'POST'])
+def advanced_search():
+    email = session.get('email')
+    if not email:
+        return redirect(url_for('login'))
+    
+    if request.method == 'POST':
+        # Сохраняем поиск
+        search_name = request.form.get('search_name')
+        if search_name:
+            search_params = {
+                'price_min': request.form.get('price_min'),
+                'price_max': request.form.get('price_max'),
+                'year_min': request.form.get('year_min'),
+                'year_max': request.form.get('year_max'),
+                'power_min': request.form.get('power_min'),
+                'power_max': request.form.get('power_max'),
+                'fuel_max': request.form.get('fuel_max'),
+                'category': request.form.get('category')
+            }
+            save_search(email, search_name, search_params)
+    
+    # Выполняем поиск
+    price_min = request.args.get('price_min') or request.form.get('price_min')
+    price_max = request.args.get('price_max') or request.form.get('price_max')
+    year_min = request.args.get('year_min') or request.form.get('year_min')
+    year_max = request.args.get('year_max') or request.form.get('year_max')
+    power_min = request.args.get('power_min') or request.form.get('power_min')
+    power_max = request.args.get('power_max') or request.form.get('power_max')
+    fuel_max = request.args.get('fuel_max') or request.form.get('fuel_max')
+    category = request.args.get('category') or request.form.get('category')
+    
+    posts = get_all_posts(category_filter=category)
+    
+    # Фильтруем по параметрам
+    filtered_posts = []
+    for post in posts:
+        # Здесь нужно добавить поля price, year, power, fuel_consumption в посты
+        # Пока просто возвращаем все посты
+        filtered_posts.append(post)
+    
+    saved_searches = get_saved_searches(email)
+    current_lang = session.get('language', 'ru')
+    user_theme = get_user_theme(email)
+    
+    return render_template('advanced_search.html', posts=filtered_posts, saved_searches=saved_searches,
+                         price_min=price_min, price_max=price_max, year_min=year_min, year_max=year_max,
+                         power_min=power_min, power_max=power_max, fuel_max=fuel_max, category=category,
+                         categories=CATEGORIES, lang=current_lang, t=get_translation, user_theme=user_theme)
+
+# === СТАТИСТИКА ===
+@app.route('/statistics')
+def statistics():
+    email = session.get('email')
+    if not email:
+        return redirect(url_for('login'))
+    
+    # Проверяем права администратора
+    user = get_user(email)
+    if not user or user.get('rank') not in ['admin', 'moderator']:
+        return redirect(url_for('index'))
+    
+    top_authors = get_top_authors(10)
+    popular = get_popular_posts(10)
+    
+    # Статистика по дням (последние 30 дней)
+    with sqlite3.connect(DATABASE) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT DATE(created_at) as date, COUNT(*) as count
+            FROM posts
+            WHERE created_at >= datetime('now', '-30 days')
+            GROUP BY DATE(created_at)
+            ORDER BY date DESC
+        """)
+        daily_stats = [dict(row) for row in cur.fetchall()]
+    
+    current_lang = session.get('language', 'ru')
+    user_theme = get_user_theme(email)
+    
+    return render_template('statistics.html', top_authors=top_authors, popular=popular, 
+                         daily_stats=daily_stats, lang=current_lang, t=get_translation, user_theme=user_theme)
 
 # === ПЕРЕКЛЮЧЕНИЕ ЯЗЫКА ===
 @app.route('/set_language/<lang>')
