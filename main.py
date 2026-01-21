@@ -60,6 +60,11 @@ def init_db():
             conn.execute("ALTER TABLE users ADD COLUMN password TEXT DEFAULT NULL")
         except sqlite3.OperationalError:
             pass
+        # Добавляем колонку theme для темы оформления
+        try:
+            conn.execute("ALTER TABLE users ADD COLUMN theme TEXT DEFAULT 'light'")
+        except sqlite3.OperationalError:
+            pass
         conn.execute("""
             CREATE TABLE IF NOT EXISTS posts (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -408,14 +413,39 @@ def create_user(email, rank=None, password=None):
             # Колонка не существует, добавляем её
             try:
                 conn.execute("ALTER TABLE users ADD COLUMN theme TEXT DEFAULT 'light'")
-            except:
-                pass
+                conn.commit()
+            except Exception as e:
+                print(f"Ошибка при добавлении колонки theme: {e}")
         
-        conn.execute("""
-            INSERT INTO users (email, verified, banned, banned_until, ban_reason, last_login, rank, 
-                              rank_changed_by, rank_change_reason, rank_changed_at, old_rank, rank_notification_seen, password, theme)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (email, False, False, None, None, None, rank, None, None, None, None, True, password_hash, 'light'))
+        # Пробуем вставить с theme
+        try:
+            conn.execute("""
+                INSERT INTO users (email, verified, banned, banned_until, ban_reason, last_login, rank, 
+                                  rank_changed_by, rank_change_reason, rank_changed_at, old_rank, rank_notification_seen, password, theme)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (email, False, False, None, None, None, rank, None, None, None, None, True, password_hash, 'light'))
+            conn.commit()
+        except sqlite3.OperationalError as e:
+            # Если ошибка из-за отсутствия колонки theme, пробуем без неё
+            if 'theme' in str(e).lower():
+                try:
+                    conn.execute("""
+                        INSERT INTO users (email, verified, banned, banned_until, ban_reason, last_login, rank, 
+                                          rank_changed_by, rank_change_reason, rank_changed_at, old_rank, rank_notification_seen, password)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (email, False, False, None, None, None, rank, None, None, None, None, True, password_hash))
+                    conn.commit()
+                    # Потом добавляем theme отдельно
+                    try:
+                        conn.execute("UPDATE users SET theme = 'light' WHERE email = ?", (email,))
+                        conn.commit()
+                    except:
+                        pass
+                except Exception as e2:
+                    print(f"Ошибка при создании пользователя: {e2}")
+                    raise
+            else:
+                raise
 
 def update_user(email, **kwargs):
     fields = ", ".join([f"{key} = ?" for key in kwargs])
@@ -842,8 +872,23 @@ def set_user_theme(email, theme):
         conn.execute("UPDATE users SET theme = ? WHERE email = ?", (theme, email))
 
 def get_user_theme(email):
-    user = get_user(email)
-    return user.get('theme', 'light') if user else 'light'
+    try:
+        user = get_user(email)
+        if user:
+            # Проверяем, есть ли поле theme
+            if 'theme' in user:
+                return user.get('theme', 'light')
+            else:
+                # Если поля нет, устанавливаем по умолчанию
+                try:
+                    set_user_theme(email, 'light')
+                except:
+                    pass
+                return 'light'
+        return 'light'
+    except Exception as e:
+        print(f"Ошибка в get_user_theme: {e}")
+        return 'light'
 
 # === РАБОТА С ПРОСМОТРАМИ ===
 def add_post_view(post_id, user_email):
@@ -1823,11 +1868,20 @@ def login():
         
         # Успешный вход
         session['email'] = email
-        update_user(email, verified=True, last_login=datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        try:
+            update_user(email, verified=True, last_login=datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        except Exception as e:
+            print(f"Ошибка при обновлении пользователя: {e}")
         log_access(email, "УСПЕШНЫЙ ВХОД")
         return redirect(url_for('index'))
     
-    return render_template('login.html')
+    try:
+        return render_template('login.html')
+    except Exception as e:
+        print(f"Ошибка при рендеринге login.html: {e}")
+        import traceback
+        traceback.print_exc()
+        return f"<h1>Ошибка сервера</h1><p>{str(e)}</p>", 500
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -1851,15 +1905,26 @@ def register():
             return render_template('register.html', error="Пользователь с таким email уже существует")
         
         # Создаем пользователя с паролем
-        create_user(email, password=password)
+        try:
+            create_user(email, password=password)
+        except Exception as e:
+            print(f"Ошибка при создании пользователя: {e}")
+            return render_template('register.html', error=f"Ошибка при регистрации: {str(e)}")
         
         # Автоматически входим
         session['email'] = email
-        update_user(email, verified=True, last_login=datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        try:
+            update_user(email, verified=True, last_login=datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        except Exception as e:
+            print(f"Ошибка при обновлении пользователя: {e}")
         log_access(email, "РЕГИСТРАЦИЯ")
         return redirect(url_for('index'))
     
-    return render_template('register.html')
+    try:
+        return render_template('register.html')
+    except Exception as e:
+        print(f"Ошибка при рендеринге register.html: {e}")
+        return f"<h1>Ошибка сервера</h1><p>{str(e)}</p>", 500
 
 @app.route('/logout')
 def logout():
@@ -2646,19 +2711,31 @@ def view_post(post_id):
 # === PWA МАРШРУТЫ ===
 @app.route('/manifest.json')
 def manifest():
-    return send_from_directory('static', 'manifest.json', mimetype='application/manifest+json')
+    try:
+        return send_from_directory('static', 'manifest.json', mimetype='application/manifest+json')
+    except Exception as e:
+        print(f"Error loading manifest.json: {e}")
+        return jsonify({'error': 'Manifest not found'}), 404
 
 @app.route('/favicon.ico')
 def favicon():
     try:
         return send_from_directory('static', 'favicon.ico', mimetype='image/x-icon')
-    except:
-        # Если favicon.ico не найден, используем PNG иконку
-        return send_from_directory('static', 'icon-192x192.png', mimetype='image/png')
+    except Exception as e:
+        print(f"Error loading favicon.ico: {e}")
+        try:
+            # Если favicon.ico не найден, используем PNG иконку
+            return send_from_directory('static', 'icon-192x192.png', mimetype='image/png')
+        except:
+            return '', 204  # No Content
 
 @app.route('/sw.js')
 def service_worker():
-    return send_from_directory('static', 'sw.js', mimetype='application/javascript')
+    try:
+        return send_from_directory('static', 'sw.js', mimetype='application/javascript')
+    except Exception as e:
+        print(f"Error loading sw.js: {e}")
+        return '', 204  # No Content
 
 # === ПЕРЕКЛЮЧЕНИЕ ТЕМЫ ===
 @app.route('/set_theme/<theme>', methods=['POST'])
@@ -2924,6 +3001,17 @@ def set_language(lang):
     if lang in ['ru', 'en']:
         session['language'] = lang
     return redirect(request.referrer or url_for('index'))
+
+# === ОБРАБОТКА ОШИБОК 404 ===
+@app.errorhandler(404)
+def not_found(error):
+    """Обработка 404 ошибок"""
+    print(f"404 Error: {request.url}")
+    if request.path.startswith('/static/'):
+        # Для статических файлов возвращаем пустой ответ
+        return '', 204
+    # Для других маршрутов перенаправляем на главную
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
     try:

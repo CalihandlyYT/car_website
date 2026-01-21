@@ -1592,6 +1592,11 @@
             
             // Сохраняем на сервере
             fetch('/set_theme/' + newTheme, {method: 'POST'})
+                .then(response => {
+                    if (!response.ok) {
+                        console.warn('Не удалось сохранить тему на сервере');
+                    }
+                })
                 .catch(err => console.error('Ошибка сохранения темы:', err));
         }
         
