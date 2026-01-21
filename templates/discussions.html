@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="{{ lang if lang else 'ru' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Обсуждения</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f4f4f4; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .discussion-card { background: white; padding: 20px; margin: 15px 0; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .discussion-stats { display: flex; gap: 15px; margin-top: 10px; color: #666; }
+        .back { display: block; margin: 20px 0; color: #667eea; text-decoration: none; }
+        .create-btn { padding: 10px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; display: inline-block; margin: 20px 0; }
+    </style>
+</head>
+<body class="{{ 'dark-theme' if user_theme == 'dark' else '' }}">
+    <div class="container">
+        <a href="{{ url_for('index') }}" class="back">← Назад</a>
+        <h1>💬 Обсуждения</h1>
+        
+        <a href="{{ url_for('create_discussion_route') }}" class="create-btn">+ Создать обсуждение</a>
+        
+        {% for discussion in discussions %}
+        <div class="discussion-card">
+            <h2><a href="{{ url_for('discussion_detail', discussion_id=discussion.id) }}" style="color: #667eea; text-decoration: none;">{{ discussion.title }}</a></h2>
+            <p>{{ discussion.content[:200] }}{% if discussion.content|length > 200 %}...{% endif %}</p>
+            <div class="discussion-stats">
+                <span>👁️ {{ discussion.views or 0 }} просмотров</span>
+                <span>💬 {{ discussion.replies_count or 0 }} ответов</span>
+                <span>📅 {{ discussion.created_at }}</span>
+            </div>
+        </div>
+        {% endfor %}
+        {% if not discussions %}
+        <p>Пока нет обсуждений</p>
+        {% endif %}
+    </div>
+</body>
+</html>

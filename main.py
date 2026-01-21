@@ -206,6 +206,105 @@ def init_db():
                 status TEXT DEFAULT 'pending'
             )
         """)
+        # Таблица просмотров постов
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS post_views (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                post_id INTEGER NOT NULL,
+                user_email TEXT NOT NULL,
+                viewed_at TEXT NOT NULL,
+                FOREIGN KEY (post_id) REFERENCES posts (id) ON DELETE CASCADE,
+                UNIQUE(post_id, user_email)
+            )
+        """)
+        # Таблица истории просмотров
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS view_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_email TEXT NOT NULL,
+                post_id INTEGER NOT NULL,
+                viewed_at TEXT NOT NULL,
+                FOREIGN KEY (post_id) REFERENCES posts (id) ON DELETE CASCADE
+            )
+        """)
+        # Таблица сохраненных поисковых запросов
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS saved_searches (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_email TEXT NOT NULL,
+                search_name TEXT NOT NULL,
+                search_params TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            )
+        """)
+        # Таблица обсуждений (форум)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS discussions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                content TEXT NOT NULL,
+                author_email TEXT NOT NULL,
+                category TEXT,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                views INTEGER DEFAULT 0,
+                replies_count INTEGER DEFAULT 0
+            )
+        """)
+        # Таблица ответов в обсуждениях
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS discussion_replies (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                discussion_id INTEGER NOT NULL,
+                author_email TEXT NOT NULL,
+                content TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                FOREIGN KEY (discussion_id) REFERENCES discussions (id) ON DELETE CASCADE
+            )
+        """)
+        # Таблица личных сообщений
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                sender_email TEXT NOT NULL,
+                recipient_email TEXT NOT NULL,
+                subject TEXT,
+                content TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                read BOOLEAN DEFAULT 0,
+                read_at TEXT
+            )
+        """)
+        # Добавляем колонки для расширенного поиска в posts
+        try:
+            conn.execute("ALTER TABLE posts ADD COLUMN price TEXT DEFAULT NULL")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            conn.execute("ALTER TABLE posts ADD COLUMN year INTEGER DEFAULT NULL")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            conn.execute("ALTER TABLE posts ADD COLUMN power INTEGER DEFAULT NULL")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            conn.execute("ALTER TABLE posts ADD COLUMN fuel_consumption REAL DEFAULT NULL")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            conn.execute("ALTER TABLE posts ADD COLUMN video_url TEXT DEFAULT NULL")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            conn.execute("ALTER TABLE posts ADD COLUMN views_count INTEGER DEFAULT 0")
+        except sqlite3.OperationalError:
+            pass
+        # Добавляем колонку темы в users
+        try:
+            conn.execute("ALTER TABLE users ADD COLUMN theme TEXT DEFAULT 'light'")
+        except sqlite3.OperationalError:
+            pass
     if not os.path.exists("access.log"):
         with open("access.log", "w", encoding="utf-8") as f:
             f.write("=== ЛОГ ДОСТУПА К САЙТУ ЗАПУЩЕН ===\n")
@@ -333,16 +432,19 @@ def is_user_banned(email):
 
 # === РАБОТА С ПОСТАМИ ===
 
-def create_post(title, image, specs, pros, cons, author, category=None, images=None, tags=None):
+def create_post(title, image, specs, pros, cons, author, category=None, images=None, tags=None, 
+                price=None, year=None, power=None, fuel_consumption=None, video_url=None):
     specs_str = '|'.join([f"{k}:{v}" for k, v in specs.items()])
     pros_str = '|'.join(pros)
     cons_str = '|'.join(cons)
     with sqlite3.connect(DATABASE) as conn:
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT INTO posts (title, image, specs, pros, cons, author, created_at, category)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """, (title, image, specs_str, pros_str, cons_str, author, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), category))
+            INSERT INTO posts (title, image, specs, pros, cons, author, created_at, category, 
+                             price, year, power, fuel_consumption, video_url)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (title, image, specs_str, pros_str, cons_str, author, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), 
+              category, price, year, power, fuel_consumption, video_url))
         post_id = cursor.lastrowid
         
         # Добавляем дополнительные изображения
@@ -468,7 +570,12 @@ def get_all_posts(tag_filter=None, category_filter=None):
                 'author': row['author'],
                 'created_at': row['created_at'],
                 'category': dict(row).get('category'),
-                'tags': tags
+                'tags': tags,
+                'price': dict(row).get('price'),
+                'year': dict(row).get('year'),
+                'power': dict(row).get('power'),
+                'fuel_consumption': dict(row).get('fuel_consumption'),
+                'video_url': dict(row).get('video_url')
             })
         return posts
 
@@ -507,7 +614,12 @@ def get_post_by_id(post_id):
             'author': row['author'],
             'created_at': row['created_at'],
             'category': row['category'] if 'category' in row.keys() else None,
-            'tags': tags
+            'tags': tags,
+            'price': dict(row).get('price'),
+            'year': dict(row).get('year'),
+            'power': dict(row).get('power'),
+            'fuel_consumption': dict(row).get('fuel_consumption'),
+            'video_url': dict(row).get('video_url')
         }
 
 # === РАБОТА С КОММЕНТАРИЯМИ ===
@@ -712,6 +824,336 @@ def get_unread_notifications_count(user_email):
         cur = conn.cursor()
         cur.execute("SELECT COUNT(*) FROM notifications WHERE user_email = ? AND seen = 0", (user_email,))
         return cur.fetchone()[0]
+
+# === РАБОТА С ТЕМОЙ ===
+def set_user_theme(email, theme):
+    with sqlite3.connect(DATABASE) as conn:
+        conn.execute("UPDATE users SET theme = ? WHERE email = ?", (theme, email))
+
+def get_user_theme(email):
+    user = get_user(email)
+    return user.get('theme', 'light') if user else 'light'
+
+# === РАБОТА С ПРОСМОТРАМИ ===
+def add_post_view(post_id, user_email):
+    with sqlite3.connect(DATABASE) as conn:
+        try:
+            conn.execute("""
+                INSERT INTO post_views (post_id, user_email, viewed_at)
+                VALUES (?, ?, ?)
+            """, (post_id, user_email, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+            # Обновляем счетчик просмотров
+            conn.execute("UPDATE posts SET views_count = COALESCE(views_count, 0) + 1 WHERE id = ?", (post_id,))
+        except sqlite3.IntegrityError:
+            pass  # Уже просмотрен
+        # Добавляем в историю
+        conn.execute("""
+            INSERT INTO view_history (user_email, post_id, viewed_at)
+            VALUES (?, ?, ?)
+        """, (user_email, post_id, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+
+def get_view_history(user_email, limit=20):
+    with sqlite3.connect(DATABASE) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT DISTINCT p.*, vh.viewed_at 
+            FROM view_history vh
+            INNER JOIN posts p ON vh.post_id = p.id
+            WHERE vh.user_email = ?
+            ORDER BY vh.viewed_at DESC
+            LIMIT ?
+        """, (user_email, limit))
+        rows = cur.fetchall()
+        posts = []
+        for row in rows:
+            specs = dict(item.split(":", 1) for item in row['specs'].split("|") if ":" in item)
+            pros = [p.strip() for p in row['pros'].split("|") if p.strip()]
+            cons = [c.strip() for c in row['cons'].split("|") if c.strip()]
+            posts.append({
+                'id': row['id'],
+                'name': row['title'],
+                'image': row['image'],
+                'specs': specs,
+                'pros': pros,
+                'cons': cons,
+                'author': row['author'],
+                'created_at': row['created_at'],
+                'viewed_at': row['viewed_at']
+            })
+        return posts
+
+def get_recommendations(user_email, limit=5):
+    """Рекомендации на основе истории просмотров"""
+    with sqlite3.connect(DATABASE) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        # Получаем категории и теги из просмотренных постов
+        cur.execute("""
+            SELECT DISTINCT p.category, pt.tag_id
+            FROM view_history vh
+            INNER JOIN posts p ON vh.post_id = p.id
+            LEFT JOIN post_tags pt ON p.id = pt.post_id
+            WHERE vh.user_email = ?
+            LIMIT 50
+        """, (user_email,))
+        viewed_data = cur.fetchall()
+        if not viewed_data:
+            # Если нет истории, возвращаем популярные посты
+            return get_popular_posts(limit)
+        
+        categories = [row['category'] for row in viewed_data if row['category']]
+        tag_ids = [row['tag_id'] for row in viewed_data if row['tag_id']]
+        
+        # Получаем ID просмотренных постов
+        cur.execute("SELECT DISTINCT post_id FROM view_history WHERE user_email = ?", (user_email,))
+        viewed_ids = [row[0] for row in cur.fetchall()]
+        
+        # Ищем похожие посты
+        if not viewed_ids:
+            return get_popular_posts(limit)
+        
+        query = "SELECT DISTINCT p.* FROM posts p WHERE p.id NOT IN (" + ",".join(["?"] * len(viewed_ids)) + ")"
+        params = list(viewed_ids)
+        
+        if categories:
+            query += " AND p.category IN (" + ",".join(["?"] * len(categories)) + ")"
+            params.extend(categories)
+        
+        if tag_ids:
+            query += " AND EXISTS (SELECT 1 FROM post_tags pt WHERE pt.post_id = p.id AND pt.tag_id IN (" + ",".join(["?"] * len(tag_ids)) + "))"
+            params.extend(tag_ids)
+        
+        query += " ORDER BY COALESCE(p.views_count, 0) DESC, p.created_at DESC LIMIT ?"
+        params.append(limit)
+        
+        try:
+            cur.execute(query, params)
+        except:
+            # Если запрос не работает, возвращаем популярные посты
+            return get_popular_posts(limit)
+        rows = cur.fetchall()
+        posts = []
+        for row in rows:
+            specs = dict(item.split(":", 1) for item in row['specs'].split("|") if ":" in item)
+            pros = [p.strip() for p in row['pros'].split("|") if p.strip()]
+            cons = [c.strip() for c in row['cons'].split("|") if c.strip()]
+            posts.append({
+                'id': row['id'],
+                'name': row['title'],
+                'image': row['image'],
+                'specs': specs,
+                'pros': pros,
+                'cons': cons,
+                'author': row['author'],
+                'created_at': row['created_at']
+            })
+        return posts
+
+# === РАБОТА С ПОПУЛЯРНЫМИ ПОСТАМИ ===
+def get_popular_posts(limit=10, sort_by='views'):
+    with sqlite3.connect(DATABASE) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        if sort_by == 'views':
+            cur.execute("""
+                SELECT p.*, 
+                       COALESCE(p.views_count, 0) as views,
+                       (SELECT COUNT(*) FROM likes l WHERE l.post_id = p.id) as likes_count,
+                       (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) as comments_count
+                FROM posts p
+                ORDER BY (COALESCE(p.views_count, 0) * 0.3 + 
+                         (SELECT COUNT(*) FROM likes l WHERE l.post_id = p.id) * 0.5 + 
+                         (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) * 0.2) DESC
+                LIMIT ?
+            """, (limit,))
+        elif sort_by == 'likes':
+            cur.execute("""
+                SELECT p.*, 
+                       COALESCE(p.views_count, 0) as views,
+                       (SELECT COUNT(*) FROM likes l WHERE l.post_id = p.id) as likes_count,
+                       (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) as comments_count
+                FROM posts p
+                ORDER BY (SELECT COUNT(*) FROM likes l WHERE l.post_id = p.id) DESC
+                LIMIT ?
+            """, (limit,))
+        else:
+            cur.execute("""
+                SELECT p.*, 
+                       COALESCE(p.views_count, 0) as views,
+                       (SELECT COUNT(*) FROM likes l WHERE l.post_id = p.id) as likes_count,
+                       (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) as comments_count
+                FROM posts p
+                ORDER BY (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) DESC
+                LIMIT ?
+            """, (limit,))
+        rows = cur.fetchall()
+        posts = []
+        for row in rows:
+            specs = dict(item.split(":", 1) for item in row['specs'].split("|") if ":" in item)
+            pros = [p.strip() for p in row['pros'].split("|") if p.strip()]
+            cons = [c.strip() for c in row['cons'].split("|") if c.strip()]
+            posts.append({
+                'id': row['id'],
+                'name': row['title'],
+                'image': row['image'],
+                'specs': specs,
+                'pros': pros,
+                'cons': cons,
+                'author': row['author'],
+                'created_at': row['created_at'],
+                'views': row['views'],
+                'likes_count': row['likes_count'],
+                'comments_count': row['comments_count']
+            })
+        return posts
+
+def get_top_authors(limit=10):
+    with sqlite3.connect(DATABASE) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT author,
+                   COUNT(*) as posts_count,
+                   SUM(COALESCE(views_count, 0)) as total_views,
+                   (SELECT COUNT(*) FROM likes l INNER JOIN posts p2 ON l.post_id = p2.id WHERE p2.author = p.author) as total_likes
+            FROM posts p
+            GROUP BY author
+            ORDER BY (posts_count * 2 + total_views * 0.1 + total_likes * 0.5) DESC
+            LIMIT ?
+        """, (limit,))
+        return [dict(row) for row in cur.fetchall()]
+
+# === РАБОТА С СОХРАНЕННЫМИ ПОИСКАМИ ===
+def save_search(user_email, search_name, search_params):
+    with sqlite3.connect(DATABASE) as conn:
+        import json
+        conn.execute("""
+            INSERT INTO saved_searches (user_email, search_name, search_params, created_at)
+            VALUES (?, ?, ?, ?)
+        """, (user_email, search_name, json.dumps(search_params), datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+
+def get_saved_searches(user_email):
+    with sqlite3.connect(DATABASE) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT * FROM saved_searches 
+            WHERE user_email = ?
+            ORDER BY created_at DESC
+            LIMIT 20
+        """, (user_email,))
+        return [dict(row) for row in cur.fetchall()]
+
+# === РАБОТА С ОБСУЖДЕНИЯМИ ===
+def create_discussion(title, content, author_email, category=None):
+    with sqlite3.connect(DATABASE) as conn:
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO discussions (title, content, author_email, category, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (title, content, author_email, category, now, now))
+        return cursor.lastrowid
+
+def get_discussions(category=None, limit=50):
+    with sqlite3.connect(DATABASE) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        if category:
+            cur.execute("""
+                SELECT * FROM discussions 
+                WHERE category = ?
+                ORDER BY updated_at DESC
+                LIMIT ?
+            """, (category, limit))
+        else:
+            cur.execute("""
+                SELECT * FROM discussions 
+                ORDER BY updated_at DESC
+                LIMIT ?
+            """, (limit,))
+        return [dict(row) for row in cur.fetchall()]
+
+def get_discussion_by_id(discussion_id):
+    with sqlite3.connect(DATABASE) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM discussions WHERE id = ?", (discussion_id,))
+        row = cur.fetchone()
+        if row:
+            # Увеличиваем просмотры
+            conn.execute("UPDATE discussions SET views = views + 1 WHERE id = ?", (discussion_id,))
+        return dict(row) if row else None
+
+def add_discussion_reply(discussion_id, author_email, content):
+    with sqlite3.connect(DATABASE) as conn:
+        conn.execute("""
+            INSERT INTO discussion_replies (discussion_id, author_email, content, created_at)
+            VALUES (?, ?, ?, ?)
+        """, (discussion_id, author_email, content, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+        # Обновляем счетчик ответов и время обновления
+        conn.execute("""
+            UPDATE discussions 
+            SET replies_count = replies_count + 1, 
+                updated_at = ?
+            WHERE id = ?
+        """, (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), discussion_id))
+
+def get_discussion_replies(discussion_id):
+    with sqlite3.connect(DATABASE) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT * FROM discussion_replies 
+            WHERE discussion_id = ?
+            ORDER BY created_at ASC
+        """, (discussion_id,))
+        return [dict(row) for row in cur.fetchall()]
+
+# === РАБОТА С ЛИЧНЫМИ СООБЩЕНИЯМИ ===
+def send_message(sender_email, recipient_email, subject, content):
+    with sqlite3.connect(DATABASE) as conn:
+        conn.execute("""
+            INSERT INTO messages (sender_email, recipient_email, subject, content, created_at)
+            VALUES (?, ?, ?, ?, ?)
+        """, (sender_email, recipient_email, subject or '', content, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+        # Создаем уведомление
+        create_notification(recipient_email, 'message', f'Новое сообщение от {sender_email}', None, sender_email)
+
+def get_messages(user_email, folder='inbox'):
+    with sqlite3.connect(DATABASE) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        if folder == 'inbox':
+            cur.execute("""
+                SELECT * FROM messages 
+                WHERE recipient_email = ?
+                ORDER BY created_at DESC
+                LIMIT 50
+            """, (user_email,))
+        else:  # sent
+            cur.execute("""
+                SELECT * FROM messages 
+                WHERE sender_email = ?
+                ORDER BY created_at DESC
+                LIMIT 50
+            """, (user_email,))
+        return [dict(row) for row in cur.fetchall()]
+
+def get_unread_messages_count(user_email):
+    with sqlite3.connect(DATABASE) as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM messages WHERE recipient_email = ? AND read = 0", (user_email,))
+        return cur.fetchone()[0]
+
+def mark_message_read(message_id, user_email):
+    with sqlite3.connect(DATABASE) as conn:
+        conn.execute("""
+            UPDATE messages 
+            SET read = 1, read_at = ?
+            WHERE id = ? AND recipient_email = ?
+        """, (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), message_id, user_email))
 
 # === РАБОТА С ЖАЛОБАМИ ===
 def create_report(reporter_email, target_type, target_id, reason):
@@ -1151,11 +1593,14 @@ def index():
     
     # Получаем текущий язык
     current_lang = session.get('language', 'ru')
+    
+    # Получаем тему пользователя
+    user_theme = get_user_theme(email)
 
     return render_template('index.html', car=car_data, cars=cars, selected=selected_car, posts=posts, 
                          search_query=search_query, staff_list=staff_list, all_tags=all_tags, 
                          categories=CATEGORIES, tag_filter=tag_filter, category_filter=category_filter,
-                         unread_notifications=unread_count, lang=current_lang, t=get_translation)
+                         unread_notifications=unread_count, lang=current_lang, t=get_translation, user_theme=user_theme)
 
 @app.route('/create_post', methods=['GET', 'POST'])
 def create_post_route():
@@ -1190,8 +1635,19 @@ def create_post_route():
             return render_template('create_post.html', error="Заполните все обязательные поля", 
                                 categories=CATEGORIES, all_tags=get_all_tags())
 
+        # Новые поля для расширенного поиска
+        price = request.form.get('price', '').strip() or None
+        year = request.form.get('year', '').strip()
+        year = int(year) if year and year.isdigit() else None
+        power = request.form.get('power', '').strip()
+        power = int(power) if power and power.isdigit() else None
+        fuel_consumption = request.form.get('fuel_consumption', '').strip()
+        fuel_consumption = float(fuel_consumption.replace(',', '.')) if fuel_consumption else None
+        video_url = request.form.get('video_url', '').strip() or None
+
         author = email.split('@')[0].title()
-        post_id = create_post(title, image, specs, pros, cons, author, category, additional_images, tags)
+        post_id = create_post(title, image, specs, pros, cons, author, category, additional_images, tags,
+                             price, year, power, fuel_consumption, video_url)
         
         # Отправляем уведомления подписчикам
         author_email = email
@@ -2149,6 +2605,9 @@ def view_post(post_id):
     if is_user_banned(email):
         return redirect(url_for('index'))
 
+    # Добавляем просмотр
+    add_post_view(post_id, email)
+
     post = get_post_by_id(post_id)
     if not post:
         return "<h1>Пост не найден</h1>", 404
@@ -2163,8 +2622,11 @@ def view_post(post_id):
     post['subscribed'] = is_subscribed(email, author_email)
 
     comments = get_comments_by_post_id(post_id)
+    current_lang = session.get('language', 'ru')
+    user_theme = get_user_theme(email)
     log_access(email, "ОТКРЫЛ ПОСТ", f"ID {post_id}")
-    return render_template('post.html', post=post, comments=comments)
+    return render_template('post.html', post=post, comments=comments, lang=current_lang, 
+                         t=get_translation, user_theme=user_theme)
 
 # === ЗАПУСК ПРИЛОЖЕНИЯ ===
 #f __name__ == '__main__':

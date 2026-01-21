@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="{{ lang if lang else 'ru' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Отправить сообщение</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f4f4f4; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .form-card { background: white; padding: 20px; border-radius: 10px; }
+        .form-group { margin: 15px 0; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        .back { display: block; margin: 20px 0; color: #667eea; text-decoration: none; }
+        button { padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body class="{{ 'dark-theme' if user_theme == 'dark' else '' }}">
+    <div class="container">
+        <a href="{{ url_for('messages') }}" class="back">← Назад</a>
+        <h1>Отправить сообщение</h1>
+        
+        <form method="POST" class="form-card">
+            <div class="form-group">
+                <label>Получатель (email):</label>
+                <input type="email" name="recipient_email" value="{{ recipient or '' }}" required>
+            </div>
+            <div class="form-group">
+                <label>Тема:</label>
+                <input type="text" name="subject" placeholder="Необязательно">
+            </div>
+            <div class="form-group">
+                <label>Сообщение:</label>
+                <textarea name="content" required rows="10"></textarea>
+            </div>
+            <button type="submit">Отправить</button>
+        </form>
+    </div>
+</body>
+</html>

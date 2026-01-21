@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="{{ lang if lang else 'ru' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ message.subject or 'Сообщение' }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f4f4f4; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .message-card { background: white; padding: 20px; border-radius: 10px; }
+        .back { display: block; margin: 20px 0; color: #667eea; text-decoration: none; }
+        .message-meta { color: #666; font-size: 0.9em; margin-bottom: 20px; }
+        .message-content { padding: 20px; background: #f9f9f9; border-radius: 5px; white-space: pre-wrap; }
+    </style>
+</head>
+<body class="{{ 'dark-theme' if user_theme == 'dark' else '' }}">
+    <div class="container">
+        <a href="{{ url_for('messages') }}" class="back">← Назад</a>
+        
+        <div class="message-card">
+            <h1>{{ message.subject or 'Без темы' }}</h1>
+            <div class="message-meta">
+                <p><strong>От:</strong> {{ message.sender_email }}</p>
+                <p><strong>Кому:</strong> {{ message.recipient_email }}</p>
+                <p><strong>Дата:</strong> {{ message.created_at }}</p>
+            </div>
+            <div class="message-content">{{ message.content }}</div>
+        </div>
+    </div>
+</body>
+</html>

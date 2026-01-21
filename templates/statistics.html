@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="{{ lang if lang else 'ru' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Статистика</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f4f4f4; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .stat-card { background: white; padding: 20px; margin: 15px 0; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .back { display: block; margin: 20px 0; color: #667eea; text-decoration: none; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #667eea; color: white; }
+    </style>
+</head>
+<body class="{{ 'dark-theme' if user_theme == 'dark' else '' }}">
+    <div class="container">
+        <a href="{{ url_for('index') }}" class="back">← Назад</a>
+        <h1>📊 Статистика</h1>
+        
+        <div class="stat-card">
+            <h2>Топ авторов</h2>
+            <table>
+                <tr>
+                    <th>Автор</th>
+                    <th>Постов</th>
+                    <th>Просмотров</th>
+                    <th>Лайков</th>
+                </tr>
+                {% for author in top_authors %}
+                <tr>
+                    <td>{{ author.author }}</td>
+                    <td>{{ author.posts_count }}</td>
+                    <td>{{ author.total_views }}</td>
+                    <td>{{ author.total_likes }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        
+        <div class="stat-card">
+            <h2>Популярные посты</h2>
+            {% for post in popular %}
+            <div style="padding: 10px; border-bottom: 1px solid #ddd;">
+                <h3>{{ post.name }}</h3>
+                <p>👁️ {{ post.views }} | ❤️ {{ post.likes_count }} | 💬 {{ post.comments_count }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

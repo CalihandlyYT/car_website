@@ -888,9 +888,88 @@
                 padding-top: calc(30px + env(safe-area-inset-top));
             }
         }
+        
+        /* Темная тема */
+        body.dark-theme {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+        }
+        
+        body.dark-theme header {
+            background: linear-gradient(135deg, #0f3460 0%, #16213e 100%);
+        }
+        
+        body.dark-theme nav {
+            background: rgba(26, 26, 46, 0.95);
+            color: #e0e0e0;
+        }
+        
+        body.dark-theme .car-container,
+        body.dark-theme .post-card,
+        body.dark-theme .staff-card {
+            background: #1e1e2e;
+            color: #e0e0e0;
+            border-color: #333;
+        }
+        
+        body.dark-theme .post-card:hover {
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.3);
+        }
+        
+        body.dark-theme input,
+        body.dark-theme textarea,
+        body.dark-theme select {
+            background: #2a2a3e;
+            color: #e0e0e0;
+            border-color: #444;
+        }
+        
+        body.dark-theme .language-btn {
+            background: rgba(26, 26, 46, 0.9);
+            color: #e0e0e0;
+            border-color: #444;
+        }
+        
+        body.dark-theme .language-dropdown {
+            background: #1e1e2e;
+            color: #e0e0e0;
+        }
+        
+        body.dark-theme .language-option:hover {
+            background: #2a2a3e;
+        }
+        
+        .theme-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 1000;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .theme-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+        }
+        
+        body.dark-theme .theme-toggle {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
     </style>
 </head>
-<body>
+<body class="{{ 'dark-theme' if user_theme == 'dark' else '' }}">
     <header>
         <h1>🏎️ {% if lang and t %}{{ t('best_amg_m_cars', lang) }}{% else %}Лучшие AMG и M-автомобили{% endif %}</h1>
     </header>
@@ -936,7 +1015,16 @@
         <a href="#" id="installButton" class="install-btn" onclick="event.preventDefault(); installPWA(); return false;">{% if lang and t %}{{ t('install', lang) }}{% else %}📱 Установить{% endif %}</a>
         <!-- Кнопка выхода -->
         <a href="{{ url_for('logout') }}" class="logout-btn">{% if lang and t %}{{ t('logout', lang) }}{% else %}Выйти{% endif %}</a>
+        <!-- Новые функции -->
+        <a href="{{ url_for('popular_posts') }}" class="profile-btn">🔥 Популярное</a>
+        <a href="{{ url_for('discussions') }}" class="profile-btn">💬 Обсуждения</a>
+        <a href="{{ url_for('messages') }}" class="profile-btn">✉️ Сообщения</a>
+        <a href="{{ url_for('view_history') }}" class="profile-btn">📜 История</a>
     </nav>
+    <!-- Кнопка переключения темы -->
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Переключить тему">
+        <span id="themeIcon">🌙</span>
+    </button>
     
     <!-- Фильтры -->
     <div style="background: rgba(255, 255, 255, 0.95); padding: 15px; margin: 20px auto; max-width: 1200px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
@@ -1482,6 +1570,41 @@
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 closeImageModal();
+            }
+        });
+        
+        // Переключение темы
+        function toggleTheme() {
+            const body = document.body;
+            const isDark = body.classList.contains('dark-theme');
+            const newTheme = isDark ? 'light' : 'dark';
+            
+            body.classList.toggle('dark-theme');
+            const themeIcon = document.getElementById('themeIcon');
+            if (themeIcon) {
+                themeIcon.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+            }
+            
+            // Сохраняем в localStorage
+            localStorage.setItem('theme', newTheme);
+            
+            // Сохраняем на сервере
+            fetch('/set_theme/' + newTheme, {method: 'POST'})
+                .catch(err => console.error('Ошибка сохранения темы:', err));
+        }
+        
+        // Загрузка темы при загрузке страницы
+        window.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('theme');
+            const userTheme = '{{ user_theme if user_theme else "light" }}';
+            const theme = savedTheme || userTheme;
+            
+            if (theme === 'dark') {
+                document.body.classList.add('dark-theme');
+                const themeIcon = document.getElementById('themeIcon');
+                if (themeIcon) {
+                    themeIcon.textContent = '☀️';
+                }
             }
         });
         

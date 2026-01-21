@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="{{ lang if lang else 'ru' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сообщения</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f4f4f4; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .folder-tabs { display: flex; gap: 10px; margin: 20px 0; }
+        .folder-tabs a { padding: 10px 15px; background: #ccc; color: white; text-decoration: none; border-radius: 5px; }
+        .folder-tabs a.active { background: #667eea; }
+        .message-card { background: white; padding: 20px; margin: 15px 0; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .message-card.unread { border-left: 4px solid #667eea; }
+        .back { display: block; margin: 20px 0; color: #667eea; text-decoration: none; }
+        .send-btn { padding: 10px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; display: inline-block; margin: 20px 0; }
+    </style>
+</head>
+<body class="{{ 'dark-theme' if user_theme == 'dark' else '' }}">
+    <div class="container">
+        <a href="{{ url_for('index') }}" class="back">← Назад</a>
+        <h1>✉️ Сообщения {% if unread_count > 0 %}<span style="background: #f5576c; color: white; padding: 5px 10px; border-radius: 50%; font-size: 0.8em;">{{ unread_count }}</span>{% endif %}</h1>
+        
+        <a href="{{ url_for('send_message_route') }}" class="send-btn">+ Отправить сообщение</a>
+        
+        <div class="folder-tabs">
+            <a href="{{ url_for('messages', folder='inbox') }}" class="{{ 'active' if folder == 'inbox' else '' }}">Входящие</a>
+            <a href="{{ url_for('messages', folder='sent') }}" class="{{ 'active' if folder == 'sent' else '' }}">Отправленные</a>
+        </div>
+        
+        {% for message in messages %}
+        <div class="message-card {{ 'unread' if not message.read and folder == 'inbox' else '' }}">
+            <h3><a href="{{ url_for('view_message', message_id=message.id) }}" style="color: #667eea; text-decoration: none;">{{ message.subject or 'Без темы' }}</a></h3>
+            <p><strong>{% if folder == 'inbox' %}От:{% else %}Кому:{% endif %}</strong> {{ message.sender_email if folder == 'inbox' else message.recipient_email }}</p>
+            <p>{{ message.content[:100] }}{% if message.content|length > 100 %}...{% endif %}</p>
+            <p style="color: #666; font-size: 0.9em;">{{ message.created_at }}</p>
+        </div>
+        {% endfor %}
+        {% if not messages %}
+        <p>Нет сообщений</p>
+        {% endif %}
+    </div>
+</body>
+</html>

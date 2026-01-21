@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="{{ lang if lang else 'ru' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Расширенный поиск</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f4f4f4; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .search-form { background: white; padding: 20px; border-radius: 10px; margin: 20px 0; }
+        .form-group { margin: 15px 0; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .back { display: block; margin: 20px 0; color: #667eea; text-decoration: none; }
+        .post-card { background: white; padding: 20px; margin: 15px 0; border-radius: 10px; }
+    </style>
+</head>
+<body class="{{ 'dark-theme' if user_theme == 'dark' else '' }}">
+    <div class="container">
+        <a href="{{ url_for('index') }}" class="back">← Назад</a>
+        <h1>🔍 Расширенный поиск</h1>
+        
+        <form method="GET" action="{{ url_for('advanced_search') }}" class="search-form">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Цена от:</label>
+                    <input type="number" name="price_min" value="{{ price_min or '' }}" placeholder="Минимум">
+                </div>
+                <div class="form-group">
+                    <label>Цена до:</label>
+                    <input type="number" name="price_max" value="{{ price_max or '' }}" placeholder="Максимум">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Год от:</label>
+                    <input type="number" name="year_min" value="{{ year_min or '' }}" placeholder="Минимум">
+                </div>
+                <div class="form-group">
+                    <label>Год до:</label>
+                    <input type="number" name="year_max" value="{{ year_max or '' }}" placeholder="Максимум">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Мощность от (л.с.):</label>
+                    <input type="number" name="power_min" value="{{ power_min or '' }}" placeholder="Минимум">
+                </div>
+                <div class="form-group">
+                    <label>Мощность до (л.с.):</label>
+                    <input type="number" name="power_max" value="{{ power_max or '' }}" placeholder="Максимум">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Расход топлива до (л/100км):</label>
+                <input type="number" step="0.1" name="fuel_max" value="{{ fuel_max or '' }}" placeholder="Максимум">
+            </div>
+            <div class="form-group">
+                <label>Категория:</label>
+                <select name="category">
+                    <option value="">Все категории</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat }}" {{ 'selected' if category == cat else '' }}>{{ cat|title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">Поиск</button>
+        </form>
+        
+        <h2>Результаты поиска:</h2>
+        {% for post in posts %}
+        <div class="post-card">
+            <h3><a href="{{ url_for('view_post', post_id=post.id) }}" style="color: #667eea; text-decoration: none;">{{ post.name }}</a></h3>
+            <p><strong>Автор:</strong> {{ post.author }}</p>
+        </div>
+        {% endfor %}
+        {% if not posts %}
+        <p>Ничего не найдено</p>
+        {% endif %}
+    </div>
+</body>
+</html>

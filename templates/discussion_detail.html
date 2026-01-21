@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="{{ lang if lang else 'ru' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ discussion.title }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f4f4f4; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .discussion { background: white; padding: 20px; margin: 15px 0; border-radius: 10px; }
+        .reply { background: #f9f9f9; padding: 15px; margin: 10px 0; border-left: 3px solid #667eea; border-radius: 5px; }
+        .back { display: block; margin: 20px 0; color: #667eea; text-decoration: none; }
+        textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; min-height: 100px; }
+        button { padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px; }
+    </style>
+</head>
+<body class="{{ 'dark-theme' if user_theme == 'dark' else '' }}">
+    <div class="container">
+        <a href="{{ url_for('discussions') }}" class="back">← Назад к обсуждениям</a>
+        
+        <div class="discussion">
+            <h1>{{ discussion.title }}</h1>
+            <p>{{ discussion.content }}</p>
+            <p style="color: #666; font-size: 0.9em;">Автор: {{ discussion.author_email }} | {{ discussion.created_at }}</p>
+        </div>
+        
+        <h2>Ответы ({{ replies|length }})</h2>
+        {% for reply in replies %}
+        <div class="reply">
+            <p>{{ reply.content }}</p>
+            <p style="color: #666; font-size: 0.9em;">{{ reply.author_email }} | {{ reply.created_at }}</p>
+        </div>
+        {% endfor %}
+        
+        <form method="POST" action="{{ url_for('add_discussion_reply_route', discussion_id=discussion.id) }}">
+            <h3>Добавить ответ</h3>
+            <textarea name="content" required placeholder="Ваш ответ..."></textarea>
+            <button type="submit">Отправить</button>
+        </form>
+    </div>
+</body>
+</html>
