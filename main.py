@@ -1376,6 +1376,15 @@ def get_discussion_replies(discussion_id):
         """, (discussion_id,))
         return [dict(row) for row in cur.fetchall()]
 
+def delete_discussion(discussion_id):
+    """Удалить обсуждение и все его ответы"""
+    with sqlite3.connect(DATABASE) as conn:
+        # Удаляем ответы (каскадное удаление должно сработать автоматически)
+        conn.execute("DELETE FROM discussion_replies WHERE discussion_id = ?", (discussion_id,))
+        # Удаляем обсуждение
+        conn.execute("DELETE FROM discussions WHERE id = ?", (discussion_id,))
+        conn.commit()
+
 # === РАБОТА С ЛИЧНЫМИ СООБЩЕНИЯМИ ===
 def send_message(sender_email, recipient_email, subject, content):
     try:
@@ -2383,6 +2392,73 @@ def admin_panel():
     # Получаем все объявления
     sales = get_all_sales()
     
+    # Получаем все обсуждения
+    discussions_list = get_discussions(limit=1000)
+    
+    # Получаем статистику сайта
+    with sqlite3.connect(DATABASE) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        
+        # Статистика пользователей
+        cur.execute("SELECT COUNT(*) as count FROM users")
+        total_users = cur.fetchone()['count']
+        
+        cur.execute("SELECT COUNT(*) as count FROM users WHERE verified = 1")
+        verified_users = cur.fetchone()['count']
+        
+        cur.execute("SELECT COUNT(*) as count FROM users WHERE banned = 1 OR banned_until IS NOT NULL")
+        banned_users = cur.fetchone()['count']
+        
+        # Статистика постов
+        cur.execute("SELECT COUNT(*) as count FROM posts")
+        total_posts = cur.fetchone()['count']
+        
+        # Статистика продаж
+        cur.execute("SELECT COUNT(*) as count FROM sales")
+        total_sales = cur.fetchone()['count']
+        
+        # Статистика обсуждений
+        cur.execute("SELECT COUNT(*) as count FROM discussions")
+        total_discussions = cur.fetchone()['count']
+        
+        cur.execute("SELECT COUNT(*) as count FROM discussion_replies")
+        total_replies = cur.fetchone()['count']
+        
+        # Статистика комментариев
+        cur.execute("SELECT COUNT(*) as count FROM comments")
+        total_comments = cur.fetchone()['count']
+        
+        # Статистика лайков
+        cur.execute("SELECT COUNT(*) as count FROM likes")
+        total_likes = cur.fetchone()['count']
+        
+        # Статистика сообщений
+        cur.execute("SELECT COUNT(*) as count FROM messages")
+        total_messages = cur.fetchone()['count']
+        
+        # Статистика входов (из логов)
+        total_logins = 0
+        if os.path.exists("access.log"):
+            with open("access.log", "r", encoding="utf-8") as f:
+                for line in f:
+                    if "УСПЕШНЫЙ ВХОД" in line or "РЕГИСТРАЦИЯ" in line:
+                        total_logins += 1
+        
+        # Статистика регистраций
+        total_registrations = total_users
+        
+        # Статистика за сегодня
+        today = datetime.now().strftime("%Y-%m-%d")
+        cur.execute("SELECT COUNT(*) as count FROM posts WHERE DATE(created_at) = ?", (today,))
+        posts_today = cur.fetchone()['count']
+        
+        cur.execute("SELECT COUNT(*) as count FROM users WHERE DATE(last_login) = ?", (today,))
+        logins_today = cur.fetchone()['count']
+        
+        cur.execute("SELECT COUNT(*) as count FROM sales WHERE DATE(created_at) = ?", (today,))
+        sales_today = cur.fetchone()['count']
+    
     # Получаем пароли админов (для отображения в админ-панели)
     admins_list = [{'username': username, 'password': password} for username, password in admins.items()]
     
@@ -2390,8 +2466,28 @@ def admin_panel():
     admin_username = session.get('admin')
     admin_email = f"{admin_username}@admin.local" if admin_username else None
     admin_rank = get_user_rank(admin_email) if admin_email else None
+    
+    # Формируем статистику
+    stats = {
+        'total_users': total_users,
+        'verified_users': verified_users,
+        'banned_users': banned_users,
+        'total_posts': total_posts,
+        'total_sales': total_sales,
+        'total_discussions': total_discussions,
+        'total_replies': total_replies,
+        'total_comments': total_comments,
+        'total_likes': total_likes,
+        'total_messages': total_messages,
+        'total_logins': total_logins,
+        'total_registrations': total_registrations,
+        'posts_today': posts_today,
+        'logins_today': logins_today,
+        'sales_today': sales_today
+    }
 
-    return render_template('admin.html', users=users_with_status, posts=posts, sales=sales, admins=admins_list, 
+    return render_template('admin.html', users=users_with_status, posts=posts, sales=sales, 
+                          discussions=discussions_list, admins=admins_list, stats=stats,
                           ranks=RANKS, rank_names=RANK_NAMES, admin_rank=admin_rank, admin_email=admin_email)
 
 
@@ -2477,6 +2573,22 @@ def admin_delete_sale(sale_id):
         return redirect(url_for('admin_login'))
     delete_sale(sale_id)
     log_access(f"ADMIN:{session['admin']}", f"УДАЛИЛ ОБЪЯВЛЕНИЕ ID {sale_id}")
+    return redirect(url_for('admin_panel'))
+
+@app.route('/admin/delete_discussion/<int:discussion_id>')
+def admin_delete_discussion(discussion_id):
+    if not session.get('admin'):
+        return redirect(url_for('admin_login'))
+    delete_discussion(discussion_id)
+    log_access(f"ADMIN:{session['admin']}", f"УДАЛИЛ ОБСУЖДЕНИЕ ID {discussion_id}")
+    return redirect(url_for('admin_panel'))
+
+@app.route('/admin/delete_discussion/<int:discussion_id>')
+def admin_delete_discussion(discussion_id):
+    if not session.get('admin'):
+        return redirect(url_for('admin_login'))
+    delete_discussion(discussion_id)
+    log_access(f"ADMIN:{session['admin']}", f"УДАЛИЛ ОБСУЖДЕНИЕ ID {discussion_id}")
     return redirect(url_for('admin_panel'))
 
 @app.route('/admin/edit_post/<int:post_id>', methods=['GET', 'POST'])
