@@ -20,6 +20,12 @@
         <a href="{{ url_for('messages') }}" class="back">← Назад</a>
         <h1>Отправить сообщение</h1>
         
+        {% if error %}
+        <div style="background: #ff6b6b; color: white; padding: 15px; border-radius: 10px; margin: 20px 0;">
+            {{ error }}
+        </div>
+        {% endif %}
+        
         <form method="POST" class="form-card">
             <div class="form-group">
                 <label>Получатель (email):</label>

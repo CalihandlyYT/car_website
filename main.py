@@ -849,11 +849,16 @@ def get_subscribers(author_email):
 
 # === РАБОТА С УВЕДОМЛЕНИЯМИ ===
 def create_notification(user_email, notification_type, message, post_id=None, author_email=None):
-    with sqlite3.connect(DATABASE) as conn:
-        conn.execute("""
-            INSERT INTO notifications (user_email, type, message, post_id, author_email, created_at)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (user_email, notification_type, message, post_id, author_email, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+    try:
+        with sqlite3.connect(DATABASE) as conn:
+            conn.execute("""
+                INSERT INTO notifications (user_email, type, message, post_id, author_email, created_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (user_email, notification_type, message, post_id, author_email, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+            conn.commit()
+    except Exception as e:
+        print(f"Ошибка при создании уведомления: {e}")
+        # Не прерываем выполнение, если уведомление не создалось
 
 def get_notifications(user_email, unread_only=False):
     with sqlite3.connect(DATABASE) as conn:
@@ -1373,13 +1378,26 @@ def get_discussion_replies(discussion_id):
 
 # === РАБОТА С ЛИЧНЫМИ СООБЩЕНИЯМИ ===
 def send_message(sender_email, recipient_email, subject, content):
-    with sqlite3.connect(DATABASE) as conn:
-        conn.execute("""
-            INSERT INTO messages (sender_email, recipient_email, subject, content, created_at)
-            VALUES (?, ?, ?, ?, ?)
-        """, (sender_email, recipient_email, subject or '', content, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-        # Создаем уведомление
-        create_notification(recipient_email, 'message', f'Новое сообщение от {sender_email}', None, sender_email)
+    try:
+        with sqlite3.connect(DATABASE) as conn:
+            conn.execute("""
+                INSERT INTO messages (sender_email, recipient_email, subject, content, created_at)
+                VALUES (?, ?, ?, ?, ?)
+            """, (sender_email, recipient_email, subject or '', content, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+            conn.commit()
+            # Создаем уведомление (если получатель существует)
+            try:
+                recipient = get_user(recipient_email)
+                if recipient:
+                    create_notification(recipient_email, 'message', f'Новое сообщение от {sender_email}', None, sender_email)
+            except Exception as e:
+                print(f"Ошибка при создании уведомления: {e}")
+                # Продолжаем выполнение, даже если уведомление не создалось
+    except Exception as e:
+        print(f"Ошибка при отправке сообщения: {e}")
+        import traceback
+        traceback.print_exc()
+        raise
 
 def get_messages(user_email, folder='inbox'):
     with sqlite3.connect(DATABASE) as conn:
@@ -3074,13 +3092,51 @@ def send_message_route():
         return redirect(url_for('login'))
     
     if request.method == 'POST':
-        recipient_email = request.form.get('recipient_email')
-        subject = request.form.get('subject')
-        content = request.form.get('content')
-        
-        if recipient_email and content:
+        try:
+            recipient_email = request.form.get('recipient_email', '').strip()
+            subject = request.form.get('subject', '').strip()
+            content = request.form.get('content', '').strip()
+            
+            if not recipient_email:
+                return render_template('send_message.html', 
+                                     error='Введите email получателя',
+                                     recipient=recipient_email,
+                                     lang=session.get('language', 'ru'),
+                                     t=get_translation,
+                                     user_theme=get_user_theme(email))
+            
+            if not content:
+                return render_template('send_message.html', 
+                                     error='Введите текст сообщения',
+                                     recipient=recipient_email,
+                                     lang=session.get('language', 'ru'),
+                                     t=get_translation,
+                                     user_theme=get_user_theme(email))
+            
+            # Проверяем, существует ли получатель
+            recipient = get_user(recipient_email)
+            if not recipient:
+                return render_template('send_message.html', 
+                                     error='Пользователь с таким email не найден',
+                                     recipient=recipient_email,
+                                     lang=session.get('language', 'ru'),
+                                     t=get_translation,
+                                     user_theme=get_user_theme(email))
+            
+            # Отправляем сообщение
             send_message(email, recipient_email, subject, content)
             return redirect(url_for('messages', folder='sent'))
+            
+        except Exception as e:
+            print(f"Ошибка при отправке сообщения: {e}")
+            import traceback
+            traceback.print_exc()
+            return render_template('send_message.html', 
+                                 error=f'Ошибка при отправке сообщения: {str(e)}',
+                                 recipient=request.form.get('recipient_email', ''),
+                                 lang=session.get('language', 'ru'),
+                                 t=get_translation,
+                                 user_theme=get_user_theme(email))
     
     recipient = request.args.get('recipient')
     current_lang = session.get('language', 'ru')
