@@ -6,6 +6,8 @@ import os
 import sqlite3
 import hashlib
 import json
+import threading
+import time
 from translations import get_translation
 
 app = Flask(__name__, static_folder='static')
@@ -65,6 +67,26 @@ def init_db():
             conn.execute("ALTER TABLE users ADD COLUMN theme TEXT DEFAULT 'light'")
         except sqlite3.OperationalError:
             pass
+        # Таблица для ежемесячных отчетов
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS monthly_reports (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                report_month TEXT NOT NULL,
+                report_year INTEGER NOT NULL,
+                total_logs INTEGER DEFAULT 0,
+                total_posts INTEGER DEFAULT 0,
+                total_users INTEGER DEFAULT 0,
+                total_comments INTEGER DEFAULT 0,
+                total_likes INTEGER DEFAULT 0,
+                total_views INTEGER DEFAULT 0,
+                total_discussions INTEGER DEFAULT 0,
+                total_messages INTEGER DEFAULT 0,
+                total_favorites INTEGER DEFAULT 0,
+                total_subscriptions INTEGER DEFAULT 0,
+                created_at TEXT NOT NULL,
+                UNIQUE(report_month, report_year)
+            )
+        """)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS posts (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -855,6 +877,189 @@ def get_notifications(user_email, unread_only=False):
 def mark_notification_seen(notification_id):
     with sqlite3.connect(DATABASE) as conn:
         conn.execute("UPDATE notifications SET seen = 1 WHERE id = ?", (notification_id,))
+
+# === СИСТЕМА ЕЖЕМЕСЯЧНЫХ ОТЧЕТОВ ===
+def count_logs_in_month(month, year):
+    """Подсчитать количество логов за месяц"""
+    try:
+        month_str = f"{year:04d}-{month:02d}"
+        count = 0
+        if os.path.exists("access.log"):
+            with open("access.log", "r", encoding="utf-8") as f:
+                for line in f:
+                    if month_str in line:
+                        count += 1
+        return count
+    except Exception as e:
+        print(f"Ошибка при подсчете логов: {e}")
+        return 0
+
+def generate_monthly_report(month=None, year=None):
+    """Генерировать месячный отчет о статистике сайта"""
+    now = datetime.now()
+    if month is None:
+        month = now.month
+    if year is None:
+        year = now.year
+    
+    # Если это текущий месяц, берем предыдущий
+    if month == now.month and year == now.year:
+        if month == 1:
+            month = 12
+            year -= 1
+        else:
+            month -= 1
+    
+    month_names = {
+        1: 'Январь', 2: 'Февраль', 3: 'Март', 4: 'Апрель',
+        5: 'Май', 6: 'Июнь', 7: 'Июль', 8: 'Август',
+        9: 'Сентябрь', 10: 'Октябрь', 11: 'Ноябрь', 12: 'Декабрь'
+    }
+    
+    report_month = month_names.get(month, f"Месяц {month}")
+    
+    with sqlite3.connect(DATABASE) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        
+        # Подсчет постов за месяц
+        cur.execute("""
+            SELECT COUNT(*) as count FROM posts
+            WHERE strftime('%Y', created_at) = ? AND strftime('%m', created_at) = ?
+        """, (str(year), f"{month:02d}"))
+        total_posts = cur.fetchone()['count']
+        
+        # Подсчет пользователей (всего)
+        cur.execute("SELECT COUNT(*) as count FROM users")
+        total_users = cur.fetchone()['count']
+        
+        # Подсчет комментариев за месяц
+        cur.execute("""
+            SELECT COUNT(*) as count FROM comments
+            WHERE strftime('%Y', created_at) = ? AND strftime('%m', created_at) = ?
+        """, (str(year), f"{month:02d}"))
+        total_comments = cur.fetchone()['count']
+        
+        # Подсчет лайков за месяц
+        cur.execute("""
+            SELECT COUNT(*) as count FROM likes
+            WHERE EXISTS (
+                SELECT 1 FROM posts 
+                WHERE posts.id = likes.post_id 
+                AND strftime('%Y', posts.created_at) = ? 
+                AND strftime('%m', posts.created_at) = ?
+            )
+        """, (str(year), f"{month:02d}"))
+        total_likes = cur.fetchone()['count']
+        
+        # Подсчет просмотров за месяц
+        cur.execute("""
+            SELECT COUNT(*) as count FROM view_history
+            WHERE strftime('%Y', viewed_at) = ? AND strftime('%m', viewed_at) = ?
+        """, (str(year), f"{month:02d}"))
+        total_views = cur.fetchone()['count']
+        
+        # Подсчет обсуждений за месяц
+        cur.execute("""
+            SELECT COUNT(*) as count FROM discussions
+            WHERE strftime('%Y', created_at) = ? AND strftime('%m', created_at) = ?
+        """, (str(year), f"{month:02d}"))
+        total_discussions = cur.fetchone()['count']
+        
+        # Подсчет сообщений за месяц
+        cur.execute("""
+            SELECT COUNT(*) as count FROM messages
+            WHERE strftime('%Y', created_at) = ? AND strftime('%m', created_at) = ?
+        """, (str(year), f"{month:02d}"))
+        total_messages = cur.fetchone()['count']
+        
+        # Подсчет избранного (всего)
+        cur.execute("SELECT COUNT(*) as count FROM favorites")
+        total_favorites = cur.fetchone()['count']
+        
+        # Подсчет подписок (всего)
+        cur.execute("SELECT COUNT(*) as count FROM subscriptions")
+        total_subscriptions = cur.fetchone()['count']
+        
+        # Подсчет логов за месяц
+        total_logs = count_logs_in_month(month, year)
+        
+        return {
+            'report_month': report_month,
+            'month': month,
+            'year': year,
+            'total_logs': total_logs,
+            'total_posts': total_posts,
+            'total_users': total_users,
+            'total_comments': total_comments,
+            'total_likes': total_likes,
+            'total_views': total_views,
+            'total_discussions': total_discussions,
+            'total_messages': total_messages,
+            'total_favorites': total_favorites,
+            'total_subscriptions': total_subscriptions
+        }
+
+def save_monthly_report(report_data):
+    """Сохранить месячный отчет в базу данных"""
+    with sqlite3.connect(DATABASE) as conn:
+        cur = conn.cursor()
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        try:
+            cur.execute("""
+                INSERT OR REPLACE INTO monthly_reports 
+                (report_month, report_year, total_logs, total_posts, total_users, 
+                 total_comments, total_likes, total_views, total_discussions, 
+                 total_messages, total_favorites, total_subscriptions, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                report_data['report_month'],
+                report_data['year'],
+                report_data['total_logs'],
+                report_data['total_posts'],
+                report_data['total_users'],
+                report_data['total_comments'],
+                report_data['total_likes'],
+                report_data['total_views'],
+                report_data['total_discussions'],
+                report_data['total_messages'],
+                report_data['total_favorites'],
+                report_data['total_subscriptions'],
+                now
+            ))
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Ошибка при сохранении отчета: {e}")
+            conn.rollback()
+            return False
+
+def get_monthly_reports(limit=12):
+    """Получить последние месячные отчеты"""
+    with sqlite3.connect(DATABASE) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT * FROM monthly_reports
+            ORDER BY report_year DESC, 
+                     CASE report_month
+                         WHEN 'Январь' THEN 1
+                         WHEN 'Февраль' THEN 2
+                         WHEN 'Март' THEN 3
+                         WHEN 'Апрель' THEN 4
+                         WHEN 'Май' THEN 5
+                         WHEN 'Июнь' THEN 6
+                         WHEN 'Июль' THEN 7
+                         WHEN 'Август' THEN 8
+                         WHEN 'Сентябрь' THEN 9
+                         WHEN 'Октябрь' THEN 10
+                         WHEN 'Ноябрь' THEN 11
+                         WHEN 'Декабрь' THEN 12
+                         ELSE 0
+                     END DESC
+            LIMIT ?
+        """, (limit,))
+        return [dict(row) for row in cur.fetchall()]
 
 def mark_all_notifications_seen(user_email):
     with sqlite3.connect(DATABASE) as conn:
@@ -2994,6 +3199,47 @@ def statistics():
     return render_template('statistics.html', top_authors=top_authors, popular=popular, 
                          daily_stats=daily_stats, lang=current_lang, t=get_translation, user_theme=user_theme)
 
+@app.route('/admin/reports')
+def monthly_reports():
+    """Просмотр ежемесячных отчетов"""
+    email = session.get('email')
+    if not email:
+        return redirect(url_for('login'))
+    
+    # Проверяем права администратора
+    user = get_user(email)
+    if not user or user.get('rank') not in ['admin', 'moderator']:
+        return redirect(url_for('index'))
+    
+    reports = get_monthly_reports(24)  # Последние 24 месяца
+    
+    current_lang = session.get('language', 'ru')
+    user_theme = get_user_theme(email)
+    
+    return render_template('monthly_reports.html', reports=reports, 
+                         lang=current_lang, t=get_translation, user_theme=user_theme)
+
+@app.route('/admin/generate_report', methods=['POST'])
+def generate_report_manual():
+    """Ручная генерация отчета (для тестирования)"""
+    email = session.get('email')
+    if not email:
+        return redirect(url_for('login'))
+    
+    # Проверяем права администратора
+    user = get_user(email)
+    if not user or user.get('rank') not in ['admin', 'moderator']:
+        return jsonify({'error': 'Доступ запрещен'}), 403
+    
+    month = request.form.get('month', type=int)
+    year = request.form.get('year', type=int)
+    
+    report_data = generate_monthly_report(month, year)
+    if save_monthly_report(report_data):
+        return jsonify({'success': True, 'message': 'Отчет успешно создан'})
+    else:
+        return jsonify({'error': 'Ошибка при создании отчета'}), 500
+
 # === ПЕРЕКЛЮЧЕНИЕ ЯЗЫКА ===
 @app.route('/set_language/<lang>')
 def set_language(lang):
@@ -3013,9 +3259,41 @@ def not_found(error):
     # Для других маршрутов перенаправляем на главную
     return redirect(url_for('index'))
 
+def schedule_monthly_reports():
+    """Планировщик для автоматической генерации отчетов каждый месяц"""
+    last_check = None
+    
+    def check_and_generate():
+        nonlocal last_check
+        while True:
+            try:
+                now = datetime.now()
+                # Проверяем в первый день месяца в 00:00
+                # Используем last_check чтобы не генерировать отчет несколько раз
+                if (now.day == 1 and now.hour == 0 and 
+                    (last_check is None or last_check.day != 1 or last_check.month != now.month)):
+                    print(f"[{now}] Генерация месячного отчета...")
+                    report_data = generate_monthly_report()
+                    if save_monthly_report(report_data):
+                        print(f"[{now}] Отчет за {report_data['report_month']} {report_data['year']} успешно создан")
+                    else:
+                        print(f"[{now}] Ошибка при создании отчета")
+                    last_check = now
+                time.sleep(60)  # Проверяем каждую минуту
+            except Exception as e:
+                print(f"Ошибка в планировщике отчетов: {e}")
+                import traceback
+                traceback.print_exc()
+                time.sleep(3600)  # При ошибке ждем час
+    
+    thread = threading.Thread(target=check_and_generate, daemon=True)
+    thread.start()
+    print("Планировщик ежемесячных отчетов запущен")
+
 if __name__ == '__main__':
     try:
         init_db()  # Создаём БД при старте
+        schedule_monthly_reports()  # Запускаем планировщик отчетов
         app.run(debug=False, host='0.0.0.0', port=8000)
     except Exception as e:
         print(f"Ошибка при запуске приложения: {e}")

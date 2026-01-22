@@ -16,7 +16,10 @@
 </head>
 <body class="{{ 'dark-theme' if user_theme == 'dark' else '' }}">
     <div class="container">
-        <a href="{{ url_for('index') }}" class="back">← Назад</a>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <a href="{{ url_for('index') }}" class="back">← Назад</a>
+            <a href="{{ url_for('monthly_reports') }}" style="background: #4ecdc4; color: white; padding: 12px 24px; border-radius: 10px; text-decoration: none; font-weight: 600;">📊 Ежемесячные отчеты</a>
+        </div>
         <h1>📊 Статистика</h1>
         
         <div class="stat-card">

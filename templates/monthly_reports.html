@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="{{ lang if lang else 'ru' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if lang and t %}{{ t('monthly_reports', lang) }}{% else %}Ежемесячные отчеты{% endif %}</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #1a1a1a;
+        }
+        
+        body.dark-theme {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        body.dark-theme .container {
+            background: rgba(30, 30, 50, 0.95);
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        body.dark-theme .header {
+            border-bottom-color: #444;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #667eea;
+        }
+        
+        body.dark-theme h1 {
+            color: #8b9aff;
+        }
+        
+        .back-btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .back-btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+        
+        .generate-btn {
+            padding: 12px 24px;
+            background: #4ecdc4;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .generate-btn:hover {
+            background: #3db5ad;
+            transform: translateY(-2px);
+        }
+        
+        .report-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        
+        body.dark-theme .report-card {
+            background: rgba(40, 40, 60, 0.8);
+        }
+        
+        .report-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+        
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        body.dark-theme .report-header {
+            border-bottom-color: #444;
+        }
+        
+        .report-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+        
+        body.dark-theme .report-title {
+            color: #8b9aff;
+        }
+        
+        .report-date {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        body.dark-theme .report-date {
+            color: #aaa;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-item {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+            text-align: center;
+        }
+        
+        .stat-item h3 {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .stat-item .value {
+            font-size: 2rem;
+            font-weight: 800;
+        }
+        
+        .no-reports {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+        
+        body.dark-theme .no-reports {
+            color: #aaa;
+        }
+        
+        .no-reports h2 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body class="{{ 'dark-theme' if user_theme == 'dark' else '' }}">
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>📊 {% if lang and t %}{{ t('monthly_reports', lang) }}{% else %}Ежемесячные отчеты{% endif %}</h1>
+                <p style="color: #666; margin-top: 5px;">{% if lang and t %}{{ t('reports_description', lang) }}{% else %}Статистика сайта по месяцам{% endif %}</p>
+            </div>
+            <div>
+                <a href="{{ url_for('statistics') }}" class="back-btn">← {% if lang and t %}{{ t('back', lang) }}{% else %}Назад{% endif %}</a>
+            </div>
+        </div>
+        
+        {% if reports %}
+            {% for report in reports %}
+            <div class="report-card">
+                <div class="report-header">
+                    <div>
+                        <div class="report-title">{{ report.report_month }} {{ report.report_year }}</div>
+                        <div class="report-date">{% if lang and t %}{{ t('created_at', lang) }}{% else %}Создан{% endif %}: {{ report.created_at }}</div>
+                    </div>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <h3>📝 {% if lang and t %}{{ t('total_logs', lang) }}{% else %}Логов{% endif %}</h3>
+                        <div class="value">{{ report.total_logs }}</div>
+                    </div>
+                    <div class="stat-item">
+                        <h3>📰 {% if lang and t %}{{ t('total_posts', lang) }}{% else %}Постов{% endif %}</h3>
+                        <div class="value">{{ report.total_posts }}</div>
+                    </div>
+                    <div class="stat-item">
+                        <h3>👥 {% if lang and t %}{{ t('total_users', lang) }}{% else %}Пользователей{% endif %}</h3>
+                        <div class="value">{{ report.total_users }}</div>
+                    </div>
+                    <div class="stat-item">
+                        <h3>💬 {% if lang and t %}{{ t('total_comments', lang) }}{% else %}Комментариев{% endif %}</h3>
+                        <div class="value">{{ report.total_comments }}</div>
+                    </div>
+                    <div class="stat-item">
+                        <h3>❤️ {% if lang and t %}{{ t('total_likes', lang) }}{% else %}Лайков{% endif %}</h3>
+                        <div class="value">{{ report.total_likes }}</div>
+                    </div>
+                    <div class="stat-item">
+                        <h3>👁️ {% if lang and t %}{{ t('total_views', lang) }}{% else %}Просмотров{% endif %}</h3>
+                        <div class="value">{{ report.total_views }}</div>
+                    </div>
+                    <div class="stat-item">
+                        <h3>💭 {% if lang and t %}{{ t('total_discussions', lang) }}{% else %}Обсуждений{% endif %}</h3>
+                        <div class="value">{{ report.total_discussions }}</div>
+                    </div>
+                    <div class="stat-item">
+                        <h3>✉️ {% if lang and t %}{{ t('total_messages', lang) }}{% else %}Сообщений{% endif %}</h3>
+                        <div class="value">{{ report.total_messages }}</div>
+                    </div>
+                    <div class="stat-item">
+                        <h3>⭐ {% if lang and t %}{{ t('total_favorites', lang) }}{% else %}В избранном{% endif %}</h3>
+                        <div class="value">{{ report.total_favorites }}</div>
+                    </div>
+                    <div class="stat-item">
+                        <h3>🔔 {% if lang and t %}{{ t('total_subscriptions', lang) }}{% else %}Подписок{% endif %}</h3>
+                        <div class="value">{{ report.total_subscriptions }}</div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-reports">
+                <h2>📋 {% if lang and t %}{{ t('no_reports', lang) }}{% else %}Отчеты пока не созданы{% endif %}</h2>
+                <p>{% if lang and t %}{{ t('reports_will_appear', lang) }}{% else %}Отчеты будут автоматически создаваться каждый месяц{% endif %}</p>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>
