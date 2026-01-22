@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="{{ lang if lang else 'ru' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>{% if lang and t %}{{ t('rules', lang) }}{% else %}Правила сайта{% endif %}</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='icon-192x192.png') }}">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #1a1a1a;
+            line-height: 1.6;
+        }
+        
+        body.dark-theme {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        body.dark-theme .container {
+            background: rgba(30, 30, 50, 0.95);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        body.dark-theme .header {
+            border-bottom-color: #8b9aff;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        body.dark-theme h1 {
+            color: #8b9aff;
+        }
+        
+        .back-btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-bottom: 30px;
+        }
+        
+        .back-btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+        
+        .rule-section {
+            margin-bottom: 30px;
+            padding: 25px;
+            background: #f8f9ff;
+            border-radius: 15px;
+            border-left: 5px solid #667eea;
+        }
+        
+        body.dark-theme .rule-section {
+            background: rgba(40, 40, 60, 0.8);
+            border-left-color: #8b9aff;
+        }
+        
+        .rule-section h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        body.dark-theme .rule-section h2 {
+            color: #8b9aff;
+        }
+        
+        .rule-section ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .rule-section li {
+            padding: 10px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+        
+        .rule-section li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        
+        body.dark-theme .rule-section li::before {
+            color: #8b9aff;
+        }
+        
+        .rule-section p {
+            margin: 10px 0;
+            color: #555;
+        }
+        
+        body.dark-theme .rule-section p {
+            color: #ccc;
+        }
+        
+        .warning {
+            background: rgba(255, 193, 7, 0.1);
+            border-left-color: #ffc107;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        body.dark-theme .warning {
+            background: rgba(255, 193, 7, 0.2);
+        }
+        
+        .warning strong {
+            color: #f39c12;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .rule-section {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body class="{{ 'dark-theme' if user_theme == 'dark' else '' }}">
+    <div class="container">
+        <a href="{{ url_for('index') }}" class="back-btn">← {% if lang and t %}{{ t('back', lang) }}{% else %}Назад{% endif %}</a>
+        
+        <div class="header">
+            <h1>📋 {% if lang and t %}{{ t('rules', lang) }}{% else %}Правила сайта{% endif %}</h1>
+            <p style="color: #666;">{% if lang and t %}{{ t('rules_description', lang) }}{% else %}Пожалуйста, ознакомьтесь с правилами использования нашего сайта{% endif %}</p>
+        </div>
+        
+        <div class="rule-section">
+            <h2>1. {% if lang and t %}{{ t('general_rules', lang) }}{% else %}Общие правила{% endif %}</h2>
+            <ul>
+                <li>{% if lang and t %}{{ t('rule_respect', lang) }}{% else %}Уважайте других пользователей и их мнение{% endif %}
+                    <span style="color: #f39c12; font-weight: 600;"> - {% if lang and t %}{{ t('ban_1_day', lang) }}{% else %}1-й раз: предупреждение, 2-й раз: бан на 1 день, 3-й раз: бан на 7 дней{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_language', lang) }}{% else %}Используйте вежливый и корректный язык общения{% endif %}
+                    <span style="color: #f39c12; font-weight: 600;"> - {% if lang and t %}{{ t('ban_3_days', lang) }}{% else %}1-й раз: предупреждение, 2-й раз: бан на 3 дня, 3-й раз: бан на 14 дней{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_spam', lang) }}{% else %}Запрещено размещение спама, рекламы и нежелательного контента{% endif %}
+                    <span style="color: #e74c3c; font-weight: 600;"> - {% if lang and t %}{{ t('ban_7_days', lang) }}{% else %}1-й раз: бан на 7 дней, 2-й раз: бан на 30 дней, 3-й раз: постоянный бан{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_legal', lang) }}{% else %}Соблюдайте законодательство и не нарушайте права других{% endif %}
+                    <span style="color: #e74c3c; font-weight: 600;"> - {% if lang and t %}{{ t('ban_permanent', lang) }}{% else %}Немедленный постоянный бан{% endif %}</span>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="rule-section">
+            <h2>2. {% if lang and t %}{{ t('content_rules', lang) }}{% else %}Правила публикации контента{% endif %}</h2>
+            <ul>
+                <li>{% if lang and t %}{{ t('rule_original', lang) }}{% else %}Публикуйте только оригинальный контент или контент с указанием источника{% endif %}
+                    <span style="color: #f39c12; font-weight: 600;"> - {% if lang and t %}{{ t('ban_1_day', lang) }}{% else %}1-й раз: предупреждение, 2-й раз: бан на 1 день, 3-й раз: бан на 7 дней{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_quality', lang) }}{% else %}Обеспечивайте качество публикуемых материалов{% endif %}
+                    <span style="color: #f39c12; font-weight: 600;"> - {% if lang and t %}{{ t('ban_warning', lang) }}{% else %}1-й раз: предупреждение, 2-й раз: бан на 1 день{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_prohibited', lang) }}{% else %}Запрещено размещение материалов, нарушающих авторские права{% endif %}
+                    <span style="color: #e74c3c; font-weight: 600;"> - {% if lang and t %}{{ t('ban_30_days', lang) }}{% else %}1-й раз: бан на 30 дней, 2-й раз: постоянный бан{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_images', lang) }}{% else %}Используйте только легальные изображения и медиафайлы{% endif %}
+                    <span style="color: #e74c3c; font-weight: 600;"> - {% if lang and t %}{{ t('ban_14_days', lang) }}{% else %}1-й раз: бан на 14 дней, 2-й раз: бан на 30 дней, 3-й раз: постоянный бан{% endif %}</span>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="rule-section">
+            <h2>3. {% if lang and t %}{{ t('communication_rules', lang) }}{% else %}Правила общения{% endif %}</h2>
+            <ul>
+                <li>{% if lang and t %}{{ t('rule_constructive', lang) }}{% else %}Ведите конструктивные дискуссии{% endif %}
+                    <span style="color: #f39c12; font-weight: 600;"> - {% if lang and t %}{{ t('ban_warning', lang) }}{% else %}1-й раз: предупреждение, 2-й раз: бан на 1 день{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_insults', lang) }}{% else %}Запрещены оскорбления, угрозы и дискриминация{% endif %}
+                    <span style="color: #e74c3c; font-weight: 600;"> - {% if lang and t %}{{ t('ban_7_days', lang) }}{% else %}1-й раз: бан на 7 дней, 2-й раз: бан на 30 дней, 3-й раз: постоянный бан{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_trolling', lang) }}{% else %}Не допускается троллинг и провокации{% endif %}
+                    <span style="color: #e74c3c; font-weight: 600;"> - {% if lang and t %}{{ t('ban_3_days', lang) }}{% else %}1-й раз: предупреждение, 2-й раз: бан на 3 дня, 3-й раз: бан на 14 дней{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_privacy', lang) }}{% else %}Соблюдайте конфиденциальность личных данных других пользователей{% endif %}
+                    <span style="color: #e74c3c; font-weight: 600;"> - {% if lang and t %}{{ t('ban_permanent', lang) }}{% else %}Немедленный постоянный бан{% endif %}</span>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="rule-section">
+            <h2>4. {% if lang and t %}{{ t('sales_rules', lang) }}{% else %}Правила размещения объявлений{% endif %}</h2>
+            <ul>
+                <li>{% if lang and t %}{{ t('rule_accurate', lang) }}{% else %}Указывайте точную информацию об автомобиле{% endif %}
+                    <span style="color: #e74c3c; font-weight: 600;"> - {% if lang and t %}{{ t('ban_7_days', lang) }}{% else %}1-й раз: бан на 7 дней, 2-й раз: бан на 30 дней, 3-й раз: постоянный бан{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_photos', lang) }}{% else %}Размещайте реальные фотографии автомобиля{% endif %}
+                    <span style="color: #f39c12; font-weight: 600;"> - {% if lang and t %}{{ t('ban_1_day', lang) }}{% else %}1-й раз: предупреждение, 2-й раз: бан на 1 день, 3-й раз: бан на 7 дней{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_price', lang) }}{% else %}Указывайте реальную цену без скрытых платежей{% endif %}
+                    <span style="color: #e74c3c; font-weight: 600;"> - {% if lang and t %}{{ t('ban_14_days', lang) }}{% else %}1-й раз: бан на 14 дней, 2-й раз: бан на 30 дней, 3-й раз: постоянный бан{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_contact', lang) }}{% else %}Предоставляйте достоверные контактные данные{% endif %}
+                    <span style="color: #e74c3c; font-weight: 600;"> - {% if lang and t %}{{ t('ban_30_days', lang) }}{% else %}1-й раз: бан на 30 дней, 2-й раз: постоянный бан{% endif %}</span>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="rule-section">
+            <h2>5. {% if lang and t %}{{ t('violations_rules', lang) }}{% else %}Нарушения и санкции{% endif %}</h2>
+            <ul>
+                <li>{% if lang and t %}{{ t('rule_warning', lang) }}{% else %}За первое нарушение выдается предупреждение{% endif %}</li>
+                <li>{% if lang and t %}{{ t('rule_ban', lang) }}{% else %}При повторных нарушениях возможен временный или постоянный бан{% endif %}</li>
+                <li>{% if lang and t %}{{ t('rule_deletion', lang) }}{% else %}Администрация оставляет за собой право удалять контент без предупреждения{% endif %}</li>
+                <li>{% if lang and t %}{{ t('rule_appeal', lang) }}{% else %}Вы можете обжаловать решение администрации{% endif %}</li>
+            </ul>
+            
+            <div style="margin-top: 20px; padding: 20px; background: rgba(102, 126, 234, 0.1); border-radius: 10px;">
+                <h3 style="color: #667eea; margin-bottom: 15px;">📊 {% if lang and t %}{{ t('ban_schedule', lang) }}{% else %}Таблица санкций{% endif %}</h3>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #667eea; color: white;">
+                            <th style="padding: 12px; text-align: left; border-radius: 8px 0 0 0;">{% if lang and t %}{{ t('violation_type', lang) }}{% else %}Тип нарушения{% endif %}</th>
+                            <th style="padding: 12px; text-align: left;">{% if lang and t %}{{ t('first_time', lang) }}{% else %}1-е нарушение{% endif %}</th>
+                            <th style="padding: 12px; text-align: left;">{% if lang and t %}{{ t('second_time', lang) }}{% else %}2-е нарушение{% endif %}</th>
+                            <th style="padding: 12px; text-align: left; border-radius: 0 8px 0 0;">{% if lang and t %}{{ t('third_time', lang) }}{% else %}3-е нарушение{% endif %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="background: rgba(255, 255, 255, 0.5);">
+                            <td style="padding: 10px; border-bottom: 1px solid #e0e0e0;">{% if lang and t %}{{ t('minor_violation', lang) }}{% else %}Незначительные нарушения{% endif %}</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #e0e0e0;">{% if lang and t %}{{ t('warning', lang) }}{% else %}Предупреждение{% endif %}</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #e0e0e0;">{% if lang and t %}{{ t('ban_1d', lang) }}{% else %}Бан на 1 день{% endif %}</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #e0e0e0;">{% if lang and t %}{{ t('ban_7d', lang) }}{% else %}Бан на 7 дней{% endif %}</td>
+                        </tr>
+                        <tr style="background: rgba(255, 255, 255, 0.3);">
+                            <td style="padding: 10px; border-bottom: 1px solid #e0e0e0;">{% if lang and t %}{{ t('medium_violation', lang) }}{% else %}Средние нарушения{% endif %}</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #e0e0e0;">{% if lang and t %}{{ t('warning', lang) }}{% else %}Предупреждение{% endif %}</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #e0e0e0;">{% if lang and t %}{{ t('ban_3d', lang) }}{% else %}Бан на 3 дня{% endif %}</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #e0e0e0;">{% if lang and t %}{{ t('ban_14d', lang) }}{% else %}Бан на 14 дней{% endif %}</td>
+                        </tr>
+                        <tr style="background: rgba(255, 193, 7, 0.2);">
+                            <td style="padding: 10px; border-bottom: 1px solid #e0e0e0;">{% if lang and t %}{{ t('serious_violation', lang) }}{% else %}Серьезные нарушения{% endif %}</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #e0e0e0;">{% if lang and t %}{{ t('ban_7d', lang) }}{% else %}Бан на 7 дней{% endif %}</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #e0e0e0;">{% if lang and t %}{{ t('ban_30d', lang) }}{% else %}Бан на 30 дней{% endif %}</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #e0e0e0;">{% if lang and t %}{{ t('permanent_ban', lang) }}{% else %}Постоянный бан{% endif %}</td>
+                        </tr>
+                        <tr style="background: rgba(231, 76, 60, 0.2);">
+                            <td style="padding: 10px;">{% if lang and t %}{{ t('critical_violation', lang) }}{% else %}Критические нарушения{% endif %}</td>
+                            <td style="padding: 10px;">{% if lang and t %}{{ t('permanent_ban', lang) }}{% else %}Постоянный бан{% endif %}</td>
+                            <td style="padding: 10px;">—</td>
+                            <td style="padding: 10px;">—</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="warning">
+            <strong>⚠️ {% if lang and t %}{{ t('important', lang) }}{% else %}Важно{% endif %}:</strong>
+            <p>{% if lang and t %}{{ t('rule_final', lang) }}{% else %}Администрация сайта оставляет за собой право изменять правила в любое время. Продолжая использовать сайт, вы соглашаетесь с этими правилами.{% endif %}</p>
+        </div>
+        
+        <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 2px solid #e0e0e0; color: #666;">
+            <p>{% if lang and t %}{{ t('rules_date', lang) }}{% else %}Последнее обновление: {{ 'now'|date('%d.%m.%Y') }}{% endif %}</p>
+        </div>
+    </div>
+</body>
+</html>

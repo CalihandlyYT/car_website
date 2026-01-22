@@ -2257,6 +2257,18 @@ def mark_rank_notification_seen():
     update_user(email, rank_notification_seen=True)
     return jsonify({'success': True}), 200
 
+@app.route('/rules')
+def rules():
+    """Страница с правилами сайта"""
+    email = session.get('email')
+    if not email:
+        return redirect(url_for('login'))
+    
+    current_lang = session.get('language', 'ru')
+    user_theme = get_user_theme(email)
+    
+    return render_template('rules.html', lang=current_lang, t=get_translation, user_theme=user_theme)
+
 @app.route('/profile')
 def profile():
     email = session.get('email')
