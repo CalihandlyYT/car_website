@@ -8,6 +8,10 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Авто-обзор">
+    <!-- Отключение кеширования -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <link rel="manifest" href="{{ url_for('manifest') }}">
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='icon-192x192.png') }}">
     <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='icon-192x192.png') }}">
@@ -1621,6 +1625,10 @@
                 navigator.serviceWorker.register('/sw.js')
                     .then((registration) => {
                         console.log('ServiceWorker registered successfully:', registration.scope);
+                        // Проверяем обновления каждые 60 секунд
+                        setInterval(() => {
+                            registration.update();
+                        }, 60000);
                     })
                     .catch((error) => {
                         console.log('ServiceWorker registration failed:', error);

@@ -3248,6 +3248,23 @@ def set_language(lang):
         session['language'] = lang
     return redirect(request.referrer or url_for('index'))
 
+# === ОТКЛЮЧЕНИЕ КЕШИРОВАНИЯ ДЛЯ HTML ===
+@app.after_request
+def add_no_cache_headers(response):
+    """Добавляет заголовки для предотвращения кеширования HTML страниц"""
+    # Для HTML страниц отключаем кеширование
+    if response.content_type and 'text/html' in response.content_type:
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        # Добавляем версию для предотвращения кеширования
+        response.headers['ETag'] = str(time.time())
+    # Для статических файлов (CSS, JS, изображения) разрешаем кеширование, но с версионированием
+    elif response.content_type and any(x in response.content_type for x in ['text/css', 'application/javascript', 'image/', 'font/']):
+        # Кешируем на 1 день, но с проверкой обновлений
+        response.headers['Cache-Control'] = 'public, max-age=86400, must-revalidate'
+    return response
+
 # === ОБРАБОТКА ОШИБОК 404 ===
 @app.errorhandler(404)
 def not_found(error):
