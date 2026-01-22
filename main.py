@@ -1387,13 +1387,22 @@ def delete_discussion(discussion_id):
 
 # === РАБОТА С ЛИЧНЫМИ СООБЩЕНИЯМИ ===
 def send_message(sender_email, recipient_email, subject, content):
+    """Отправить сообщение пользователю"""
     try:
         with sqlite3.connect(DATABASE) as conn:
+            # Проверяем, что получатель существует
+            cur = conn.cursor()
+            cur.execute("SELECT email FROM users WHERE email = ?", (recipient_email,))
+            if not cur.fetchone():
+                raise ValueError(f"Пользователь с email {recipient_email} не найден")
+            
+            # Вставляем сообщение
             conn.execute("""
                 INSERT INTO messages (sender_email, recipient_email, subject, content, created_at)
                 VALUES (?, ?, ?, ?, ?)
             """, (sender_email, recipient_email, subject or '', content, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
             conn.commit()
+            
             # Создаем уведомление (если получатель существует)
             try:
                 recipient = get_user(recipient_email)
@@ -1402,6 +1411,11 @@ def send_message(sender_email, recipient_email, subject, content):
             except Exception as e:
                 print(f"Ошибка при создании уведомления: {e}")
                 # Продолжаем выполнение, даже если уведомление не создалось
+    except sqlite3.Error as e:
+        print(f"Ошибка базы данных при отправке сообщения: {e}")
+        import traceback
+        traceback.print_exc()
+        raise
     except Exception as e:
         print(f"Ошибка при отправке сообщения: {e}")
         import traceback
@@ -3236,15 +3250,26 @@ def send_message_route():
                                      user_theme=get_user_theme(email))
             
             # Отправляем сообщение
-            send_message(email, recipient_email, subject, content)
-            return redirect(url_for('messages', folder='sent'))
+            try:
+                send_message(email, recipient_email, subject, content)
+                return redirect(url_for('messages', folder='sent'))
+            except Exception as send_error:
+                print(f"Ошибка при отправке сообщения: {send_error}")
+                import traceback
+                traceback.print_exc()
+                return render_template('send_message.html', 
+                                     error=f'Ошибка при отправке сообщения: {str(send_error)}',
+                                     recipient=recipient_email,
+                                     lang=session.get('language', 'ru'),
+                                     t=get_translation,
+                                     user_theme=get_user_theme(email))
             
         except Exception as e:
-            print(f"Ошибка при отправке сообщения: {e}")
+            print(f"Ошибка при обработке формы: {e}")
             import traceback
             traceback.print_exc()
             return render_template('send_message.html', 
-                                 error=f'Ошибка при отправке сообщения: {str(e)}',
+                                 error=f'Ошибка при обработке запроса: {str(e)}',
                                  recipient=request.form.get('recipient_email', ''),
                                  lang=session.get('language', 'ru'),
                                  t=get_translation,
