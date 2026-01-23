@@ -19,76 +19,77 @@ DATABASE = 'users.db'
 
 # === ИНИЦИАЛИЗАЦИЯ БАЗЫ ===
 def init_db():
-    with sqlite3.connect(DATABASE) as conn:
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS users (
-                email TEXT PRIMARY KEY,
-                verified BOOLEAN NOT NULL DEFAULT 0,
-                banned BOOLEAN NOT NULL DEFAULT 0,
-                banned_until TEXT,
-                ban_reason TEXT,
-                last_login TEXT,
-                rank TEXT DEFAULT NULL
-            )
-        """)
-        # Добавляем колонку rank, если её нет (для существующих БД)
-        try:
-            conn.execute("ALTER TABLE users ADD COLUMN rank TEXT DEFAULT NULL")
-        except sqlite3.OperationalError:
-            pass  # Колонка уже существует
-        # Добавляем колонки для уведомлений об изменении ранга
-        try:
-            conn.execute("ALTER TABLE users ADD COLUMN rank_changed_by TEXT DEFAULT NULL")
-        except sqlite3.OperationalError:
-            pass
-        try:
-            conn.execute("ALTER TABLE users ADD COLUMN rank_change_reason TEXT DEFAULT NULL")
-        except sqlite3.OperationalError:
-            pass
-        try:
-            conn.execute("ALTER TABLE users ADD COLUMN rank_changed_at TEXT DEFAULT NULL")
-        except sqlite3.OperationalError:
-            pass
-        try:
-            conn.execute("ALTER TABLE users ADD COLUMN old_rank TEXT DEFAULT NULL")
-        except sqlite3.OperationalError:
-            pass
-        try:
-            conn.execute("ALTER TABLE users ADD COLUMN rank_notification_seen BOOLEAN DEFAULT 0")
-        except sqlite3.OperationalError:
-            pass
-        # Добавляем колонку password для входа по паролю
-        try:
-            conn.execute("ALTER TABLE users ADD COLUMN password TEXT DEFAULT NULL")
-        except sqlite3.OperationalError:
-            pass
-        # Добавляем колонку theme для темы оформления
-        try:
-            conn.execute("ALTER TABLE users ADD COLUMN theme TEXT DEFAULT 'light'")
-        except sqlite3.OperationalError:
-            pass
-        # Таблица для ежемесячных отчетов
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS monthly_reports (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                report_month TEXT NOT NULL,
-                report_year INTEGER NOT NULL,
-                total_logs INTEGER DEFAULT 0,
-                total_posts INTEGER DEFAULT 0,
-                total_users INTEGER DEFAULT 0,
-                total_comments INTEGER DEFAULT 0,
-                total_likes INTEGER DEFAULT 0,
-                total_views INTEGER DEFAULT 0,
-                total_discussions INTEGER DEFAULT 0,
-                total_messages INTEGER DEFAULT 0,
-                total_favorites INTEGER DEFAULT 0,
-                total_subscriptions INTEGER DEFAULT 0,
-                created_at TEXT NOT NULL,
-                UNIQUE(report_month, report_year)
-            )
-        """)
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS posts (
+    try:
+        with sqlite3.connect(DATABASE) as conn:
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS users (
+                    email TEXT PRIMARY KEY,
+                    verified BOOLEAN NOT NULL DEFAULT 0,
+                    banned BOOLEAN NOT NULL DEFAULT 0,
+                    banned_until TEXT,
+                    ban_reason TEXT,
+                    last_login TEXT,
+                    rank TEXT DEFAULT NULL
+                )
+            """)
+            # Добавляем колонку rank, если её нет (для существующих БД)
+            try:
+                conn.execute("ALTER TABLE users ADD COLUMN rank TEXT DEFAULT NULL")
+            except sqlite3.OperationalError:
+                pass  # Колонка уже существует
+            # Добавляем колонки для уведомлений об изменении ранга
+            try:
+                conn.execute("ALTER TABLE users ADD COLUMN rank_changed_by TEXT DEFAULT NULL")
+            except sqlite3.OperationalError:
+                pass
+            try:
+                conn.execute("ALTER TABLE users ADD COLUMN rank_change_reason TEXT DEFAULT NULL")
+            except sqlite3.OperationalError:
+                pass
+            try:
+                conn.execute("ALTER TABLE users ADD COLUMN rank_changed_at TEXT DEFAULT NULL")
+            except sqlite3.OperationalError:
+                pass
+            try:
+                conn.execute("ALTER TABLE users ADD COLUMN old_rank TEXT DEFAULT NULL")
+            except sqlite3.OperationalError:
+                pass
+            try:
+                conn.execute("ALTER TABLE users ADD COLUMN rank_notification_seen BOOLEAN DEFAULT 0")
+            except sqlite3.OperationalError:
+                pass
+            # Добавляем колонку password для входа по паролю
+            try:
+                conn.execute("ALTER TABLE users ADD COLUMN password TEXT DEFAULT NULL")
+            except sqlite3.OperationalError:
+                pass
+            # Добавляем колонку theme для темы оформления
+            try:
+                conn.execute("ALTER TABLE users ADD COLUMN theme TEXT DEFAULT 'light'")
+            except sqlite3.OperationalError:
+                pass
+            # Таблица для ежемесячных отчетов
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS monthly_reports (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    report_month TEXT NOT NULL,
+                    report_year INTEGER NOT NULL,
+                    total_logs INTEGER DEFAULT 0,
+                    total_posts INTEGER DEFAULT 0,
+                    total_users INTEGER DEFAULT 0,
+                    total_comments INTEGER DEFAULT 0,
+                    total_likes INTEGER DEFAULT 0,
+                    total_views INTEGER DEFAULT 0,
+                    total_discussions INTEGER DEFAULT 0,
+                    total_messages INTEGER DEFAULT 0,
+                    total_favorites INTEGER DEFAULT 0,
+                    total_subscriptions INTEGER DEFAULT 0,
+                    created_at TEXT NOT NULL,
+                    UNIQUE(report_month, report_year)
+                )
+            """)
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS posts (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 title TEXT NOT NULL,
                 image TEXT NOT NULL,
@@ -97,245 +98,250 @@ def init_db():
                 cons TEXT NOT NULL,
                 author TEXT NOT NULL,
                 created_at TEXT NOT NULL
-            )
-        """)
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS comments (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                post_id INTEGER NOT NULL,
-                author TEXT NOT NULL,
-                text TEXT NOT NULL,
-                created_at TEXT NOT NULL,
-                FOREIGN KEY (post_id) REFERENCES posts (id)
-            )
-        """)
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS likes (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                post_id INTEGER NOT NULL,
-                user_email TEXT NOT NULL,
-                FOREIGN KEY (post_id) REFERENCES posts (id),
-                UNIQUE(post_id, user_email)
-            )
-        """)
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS sales (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                title TEXT NOT NULL,
-                description TEXT,
-                image TEXT NOT NULL,
-                price TEXT NOT NULL,
-                author TEXT NOT NULL,
-                contact TEXT,
-                created_at TEXT NOT NULL
-            )
-        """)
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS sale_reviews (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                sale_id INTEGER NOT NULL,
-                author TEXT NOT NULL,
-                text TEXT NOT NULL,
-                rating INTEGER DEFAULT 5,
-                created_at TEXT NOT NULL,
-                FOREIGN KEY (sale_id) REFERENCES sales (id)
-            )
-        """)
-        # Таблица для множественных фото постов
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS post_images (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                post_id INTEGER NOT NULL,
-                image_url TEXT NOT NULL,
-                display_order INTEGER DEFAULT 0,
-                FOREIGN KEY (post_id) REFERENCES posts (id) ON DELETE CASCADE
-            )
-        """)
-        # Таблица для тегов
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS tags (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL UNIQUE
-            )
-        """)
-        # Связь постов и тегов
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS post_tags (
-                post_id INTEGER NOT NULL,
-                tag_id INTEGER NOT NULL,
-                PRIMARY KEY (post_id, tag_id),
-                FOREIGN KEY (post_id) REFERENCES posts (id) ON DELETE CASCADE,
-                FOREIGN KEY (tag_id) REFERENCES tags (id) ON DELETE CASCADE
-            )
-        """)
-        # Добавляем колонку category в posts
-        try:
-            conn.execute("ALTER TABLE posts ADD COLUMN category TEXT DEFAULT NULL")
-        except sqlite3.OperationalError:
-            pass
-        # Таблица избранного
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS favorites (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_email TEXT NOT NULL,
-                post_id INTEGER NOT NULL,
-                created_at TEXT NOT NULL,
-                UNIQUE(user_email, post_id),
-                FOREIGN KEY (post_id) REFERENCES posts (id) ON DELETE CASCADE
-            )
-        """)
-        # Таблица подписок на авторов
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS subscriptions (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                subscriber_email TEXT NOT NULL,
-                author_email TEXT NOT NULL,
-                created_at TEXT NOT NULL,
-                UNIQUE(subscriber_email, author_email)
-            )
-        """)
-        # Таблица уведомлений
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS notifications (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_email TEXT NOT NULL,
-                type TEXT NOT NULL,
-                message TEXT NOT NULL,
-                post_id INTEGER,
-                author_email TEXT,
-                created_at TEXT NOT NULL,
-                seen BOOLEAN DEFAULT 0
-            )
-        """)
-        # Таблица жалоб
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS reports (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                reporter_email TEXT NOT NULL,
-                type TEXT NOT NULL,
-                target_type TEXT NOT NULL,
-                target_id INTEGER NOT NULL,
-                reason TEXT,
-                status TEXT DEFAULT 'pending',
-                created_at TEXT NOT NULL,
-                reviewed_by TEXT,
-                reviewed_at TEXT
-            )
-        """)
-        # Таблица заявок на карьеру
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS career_applications (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                email TEXT NOT NULL,
-                phone TEXT NOT NULL,
-                full_name TEXT NOT NULL,
-                bio TEXT NOT NULL,
-                created_at TEXT NOT NULL,
-                status TEXT DEFAULT 'pending'
-            )
-        """)
-        # Таблица просмотров постов
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS post_views (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                post_id INTEGER NOT NULL,
-                user_email TEXT NOT NULL,
-                viewed_at TEXT NOT NULL,
-                FOREIGN KEY (post_id) REFERENCES posts (id) ON DELETE CASCADE,
-                UNIQUE(post_id, user_email)
-            )
-        """)
-        # Таблица истории просмотров
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS view_history (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_email TEXT NOT NULL,
-                post_id INTEGER NOT NULL,
-                viewed_at TEXT NOT NULL,
-                FOREIGN KEY (post_id) REFERENCES posts (id) ON DELETE CASCADE
-            )
-        """)
-        # Таблица сохраненных поисковых запросов
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS saved_searches (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_email TEXT NOT NULL,
-                search_name TEXT NOT NULL,
-                search_params TEXT NOT NULL,
-                created_at TEXT NOT NULL
-            )
-        """)
-        # Таблица обсуждений (форум)
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS discussions (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                title TEXT NOT NULL,
-                content TEXT NOT NULL,
-                author_email TEXT NOT NULL,
-                category TEXT,
-                created_at TEXT NOT NULL,
-                updated_at TEXT NOT NULL,
-                views INTEGER DEFAULT 0,
-                replies_count INTEGER DEFAULT 0
-            )
-        """)
-        # Таблица ответов в обсуждениях
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS discussion_replies (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                discussion_id INTEGER NOT NULL,
-                author_email TEXT NOT NULL,
-                content TEXT NOT NULL,
-                created_at TEXT NOT NULL,
-                FOREIGN KEY (discussion_id) REFERENCES discussions (id) ON DELETE CASCADE
-            )
-        """)
-        # Таблица личных сообщений
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS messages (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                sender_email TEXT NOT NULL,
-                recipient_email TEXT NOT NULL,
-                subject TEXT,
-                content TEXT NOT NULL,
-                created_at TEXT NOT NULL,
-                read BOOLEAN DEFAULT 0,
-                read_at TEXT
-            )
-        """)
-        # Добавляем колонки для расширенного поиска в posts
-        try:
-            conn.execute("ALTER TABLE posts ADD COLUMN price TEXT DEFAULT NULL")
-        except sqlite3.OperationalError:
-            pass
-        try:
-            conn.execute("ALTER TABLE posts ADD COLUMN year INTEGER DEFAULT NULL")
-        except sqlite3.OperationalError:
-            pass
-        try:
-            conn.execute("ALTER TABLE posts ADD COLUMN power INTEGER DEFAULT NULL")
-        except sqlite3.OperationalError:
-            pass
-        try:
-            conn.execute("ALTER TABLE posts ADD COLUMN fuel_consumption REAL DEFAULT NULL")
-        except sqlite3.OperationalError:
-            pass
-        try:
-            conn.execute("ALTER TABLE posts ADD COLUMN video_url TEXT DEFAULT NULL")
-        except sqlite3.OperationalError:
-            pass
-        try:
-            conn.execute("ALTER TABLE posts ADD COLUMN views_count INTEGER DEFAULT 0")
-        except sqlite3.OperationalError:
-            pass
-        # Добавляем колонку темы в users
-        try:
-            conn.execute("ALTER TABLE users ADD COLUMN theme TEXT DEFAULT 'light'")
-        except sqlite3.OperationalError:
-            pass
-    if not os.path.exists("access.log"):
-        with open("access.log", "w", encoding="utf-8") as f:
-            f.write("=== ЛОГ ДОСТУПА К САЙТУ ЗАПУЩЕН ===\n")
+                )
+            """)
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS comments (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    post_id INTEGER NOT NULL,
+                    author TEXT NOT NULL,
+                    text TEXT NOT NULL,
+                    created_at TEXT NOT NULL,
+                    FOREIGN KEY (post_id) REFERENCES posts (id)
+                )
+            """)
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS likes (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    post_id INTEGER NOT NULL,
+                    user_email TEXT NOT NULL,
+                    FOREIGN KEY (post_id) REFERENCES posts (id),
+                    UNIQUE(post_id, user_email)
+                )
+            """)
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS sales (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    title TEXT NOT NULL,
+                    description TEXT,
+                    image TEXT NOT NULL,
+                    price TEXT NOT NULL,
+                    author TEXT NOT NULL,
+                    contact TEXT,
+                    created_at TEXT NOT NULL
+                )
+            """)
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS sale_reviews (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    sale_id INTEGER NOT NULL,
+                    author TEXT NOT NULL,
+                    text TEXT NOT NULL,
+                    rating INTEGER DEFAULT 5,
+                    created_at TEXT NOT NULL,
+                    FOREIGN KEY (sale_id) REFERENCES sales (id)
+                )
+            """)
+            # Таблица для множественных фото постов
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS post_images (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    post_id INTEGER NOT NULL,
+                    image_url TEXT NOT NULL,
+                    display_order INTEGER DEFAULT 0,
+                    FOREIGN KEY (post_id) REFERENCES posts (id) ON DELETE CASCADE
+                )
+            """)
+            # Таблица для тегов
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS tags (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL UNIQUE
+                )
+            """)
+            # Связь постов и тегов
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS post_tags (
+                    post_id INTEGER NOT NULL,
+                    tag_id INTEGER NOT NULL,
+                    PRIMARY KEY (post_id, tag_id),
+                    FOREIGN KEY (post_id) REFERENCES posts (id) ON DELETE CASCADE,
+                    FOREIGN KEY (tag_id) REFERENCES tags (id) ON DELETE CASCADE
+                )
+            """)
+            # Добавляем колонку category в posts
+            try:
+                conn.execute("ALTER TABLE posts ADD COLUMN category TEXT DEFAULT NULL")
+            except sqlite3.OperationalError:
+                pass
+            # Таблица избранного
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS favorites (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_email TEXT NOT NULL,
+                    post_id INTEGER NOT NULL,
+                    created_at TEXT NOT NULL,
+                    UNIQUE(user_email, post_id),
+                    FOREIGN KEY (post_id) REFERENCES posts (id) ON DELETE CASCADE
+                )
+            """)
+            # Таблица подписок на авторов
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS subscriptions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    subscriber_email TEXT NOT NULL,
+                    author_email TEXT NOT NULL,
+                    created_at TEXT NOT NULL,
+                    UNIQUE(subscriber_email, author_email)
+                )
+            """)
+            # Таблица уведомлений
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS notifications (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_email TEXT NOT NULL,
+                    type TEXT NOT NULL,
+                    message TEXT NOT NULL,
+                    post_id INTEGER,
+                    author_email TEXT,
+                    created_at TEXT NOT NULL,
+                    seen BOOLEAN DEFAULT 0
+                )
+            """)
+            # Таблица жалоб
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS reports (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    reporter_email TEXT NOT NULL,
+                    type TEXT NOT NULL,
+                    target_type TEXT NOT NULL,
+                    target_id INTEGER NOT NULL,
+                    reason TEXT,
+                    status TEXT DEFAULT 'pending',
+                    created_at TEXT NOT NULL,
+                    reviewed_by TEXT,
+                    reviewed_at TEXT
+                )
+            """)
+            # Таблица заявок на карьеру
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS career_applications (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    email TEXT NOT NULL,
+                    phone TEXT NOT NULL,
+                    full_name TEXT NOT NULL,
+                    bio TEXT NOT NULL,
+                    created_at TEXT NOT NULL,
+                    status TEXT DEFAULT 'pending'
+                )
+            """)
+            # Таблица просмотров постов
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS post_views (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    post_id INTEGER NOT NULL,
+                    user_email TEXT NOT NULL,
+                    viewed_at TEXT NOT NULL,
+                    FOREIGN KEY (post_id) REFERENCES posts (id) ON DELETE CASCADE,
+                    UNIQUE(post_id, user_email)
+                )
+            """)
+            # Таблица истории просмотров
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS view_history (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_email TEXT NOT NULL,
+                    post_id INTEGER NOT NULL,
+                    viewed_at TEXT NOT NULL,
+                    FOREIGN KEY (post_id) REFERENCES posts (id) ON DELETE CASCADE
+                )
+            """)
+            # Таблица сохраненных поисковых запросов
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS saved_searches (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_email TEXT NOT NULL,
+                    search_name TEXT NOT NULL,
+                    search_params TEXT NOT NULL,
+                    created_at TEXT NOT NULL
+                )
+            """)
+            # Таблица обсуждений (форум)
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS discussions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    title TEXT NOT NULL,
+                    content TEXT NOT NULL,
+                    author_email TEXT NOT NULL,
+                    category TEXT,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    views INTEGER DEFAULT 0,
+                    replies_count INTEGER DEFAULT 0
+                )
+            """)
+            # Таблица ответов в обсуждениях
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS discussion_replies (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    discussion_id INTEGER NOT NULL,
+                    author_email TEXT NOT NULL,
+                    content TEXT NOT NULL,
+                    created_at TEXT NOT NULL,
+                    FOREIGN KEY (discussion_id) REFERENCES discussions (id) ON DELETE CASCADE
+                )
+            """)
+            # Таблица личных сообщений
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS messages (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    sender_email TEXT NOT NULL,
+                    recipient_email TEXT NOT NULL,
+                    subject TEXT,
+                    content TEXT NOT NULL,
+                    created_at TEXT NOT NULL,
+                    read BOOLEAN DEFAULT 0,
+                    read_at TEXT
+                )
+            """)
+            # Добавляем колонки для расширенного поиска в posts
+            try:
+                conn.execute("ALTER TABLE posts ADD COLUMN price TEXT DEFAULT NULL")
+            except sqlite3.OperationalError:
+                pass
+            try:
+                conn.execute("ALTER TABLE posts ADD COLUMN year INTEGER DEFAULT NULL")
+            except sqlite3.OperationalError:
+                pass
+            try:
+                conn.execute("ALTER TABLE posts ADD COLUMN power INTEGER DEFAULT NULL")
+            except sqlite3.OperationalError:
+                pass
+            try:
+                conn.execute("ALTER TABLE posts ADD COLUMN fuel_consumption REAL DEFAULT NULL")
+            except sqlite3.OperationalError:
+                pass
+            try:
+                conn.execute("ALTER TABLE posts ADD COLUMN video_url TEXT DEFAULT NULL")
+            except sqlite3.OperationalError:
+                pass
+            try:
+                conn.execute("ALTER TABLE posts ADD COLUMN views_count INTEGER DEFAULT 0")
+            except sqlite3.OperationalError:
+                pass
+    except Exception as e:
+        print(f"Критическая ошибка при инициализации базы данных: {e}")
+        import traceback
+        traceback.print_exc()
+        raise
+    
+    # Создаем файл логов, если его нет
+    try:
+        if not os.path.exists("access.log"):
+            with open("access.log", "w", encoding="utf-8") as f:
+                f.write("=== ЛОГ ДОСТУПА К САЙТУ ЗАПУЩЕН ===\n")
+    except Exception as e:
+        print(f"Предупреждение: Не удалось создать файл access.log: {e}")
 
 # === АДМИНЫ ===
 admins = {
@@ -3537,12 +3543,46 @@ def schedule_monthly_reports():
 
 # Инициализируем БД при импорте модуля (для gunicorn и других WSGI серверов)
 # Это гарантирует, что access.log будет создан при любом способе запуска
-init_db()
+try:
+    init_db()
+except Exception as e:
+    print(f"Предупреждение: Ошибка при инициализации БД при импорте: {e}")
+    import traceback
+    traceback.print_exc()
+
+# Флаг для отслеживания запуска планировщика
+_scheduler_started = False
+
+def ensure_scheduler_started():
+    """Убедиться, что планировщик отчетов запущен (только один раз)"""
+    global _scheduler_started
+    if not _scheduler_started:
+        try:
+            schedule_monthly_reports()
+            _scheduler_started = True
+        except Exception as e:
+            print(f"Ошибка при запуске планировщика отчетов: {e}")
+            import traceback
+            traceback.print_exc()
+
 if __name__ == '__main__':
     try:
-        init_db()  # Создаём БД при старте
-        schedule_monthly_reports()  # Запускаем планировщик отчетов
+        # Дополнительная инициализация БД при прямом запуске
+        try:
+            init_db()
+        except Exception as e:
+            print(f"Предупреждение: Ошибка при повторной инициализации БД: {e}")
+        
+        # Запускаем планировщик отчетов
+        ensure_scheduler_started()
+        
+        # Запускаем приложение
         app.run(debug=False, host='0.0.0.0', port=8000)
     except Exception as e:
-        print(f"Ошибка при запуске приложения: {e}")
+        print(f"Критическая ошибка при запуске приложения: {e}")
+        import traceback
+        traceback.print_exc()
         raise
+else:
+    # При запуске через WSGI (gunicorn) также запускаем планировщик
+    ensure_scheduler_started()
