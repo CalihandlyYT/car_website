@@ -1,9 +1,3 @@
-# Flask - веб-фреймворк для создания веб-приложения
 Flask==3.1.2
-
-# Gunicorn - WSGI HTTP сервер для продакшена
 gunicorn==23.0.0
-
-# Pillow - для работы с изображениями (используется в create_car_icons.py, generate_icons.py)
-# Необходимо для создания PNG иконок из SVG
 Pillow>=10.0.0
