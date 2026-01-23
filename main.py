@@ -3538,15 +3538,6 @@ def schedule_monthly_reports():
 # Инициализируем БД при импорте модуля (для gunicorn и других WSGI серверов)
 # Это гарантирует, что access.log будет создан при любом способе запуска
 init_db()
-
-#if __name__ == '__main__':
- #   try:
-  #      schedule_monthly_reports()  # Запускаем планировщик отчетов
-#        app.run(debug=False, host='0.0.0.0', port=8000)
- #   except Exception as e:
-#        print(f"Ошибка при запуске приложения: {e}")
- #       raise
-
 if __name__ == '__main__':
     try:
         init_db()  # Создаём БД при старте
