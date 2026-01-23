@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="{{ lang if lang else 'ru' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>{% if lang and t %}{{ t('features', lang) }}{% else %}Функции сайта{% endif %}</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='icon-192x192.png') }}">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #1a1a1a;
+            line-height: 1.6;
+        }
+        
+        body.dark-theme {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+        }
+        
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        body.dark-theme .container {
+            background: rgba(30, 30, 50, 0.95);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        body.dark-theme .header {
+            border-bottom-color: #8b9aff;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        body.dark-theme h1 {
+            color: #8b9aff;
+        }
+        
+        .back-btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-bottom: 30px;
+        }
+        
+        .back-btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+        
+        .feature-category {
+            margin-bottom: 35px;
+            padding: 30px;
+            background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
+            border-radius: 15px;
+            border-left: 5px solid #667eea;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        body.dark-theme .feature-category {
+            background: linear-gradient(135deg, rgba(40, 40, 60, 0.8) 0%, rgba(50, 50, 70, 0.8) 100%);
+            border-left-color: #8b9aff;
+        }
+        
+        .feature-category h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        body.dark-theme .feature-category h2 {
+            color: #8b9aff;
+        }
+        
+        .feature-category p {
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 1.05rem;
+        }
+        
+        body.dark-theme .feature-category p {
+            color: #b0b0b0;
+        }
+        
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .feature-list li {
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 8px;
+            border-left: 3px solid #4ecdc4;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        body.dark-theme .feature-list li {
+            background: rgba(60, 60, 80, 0.6);
+            border-left-color: #5dd5cc;
+        }
+        
+        .feature-list li:hover {
+            transform: translateX(5px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .feature-list li::before {
+            content: "✓";
+            color: #4ecdc4;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .feature-item {
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 12px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s;
+        }
+        
+        body.dark-theme .feature-item {
+            background: rgba(60, 60, 80, 0.6);
+            border-color: #4a4a6a;
+        }
+        
+        .feature-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+            border-color: #667eea;
+        }
+        
+        .feature-item h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+        
+        body.dark-theme .feature-item h3 {
+            color: #8b9aff;
+        }
+        
+        .feature-item ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .feature-item ul li {
+            padding: 5px 0;
+            color: #555;
+            border-left: none;
+            background: none;
+            margin: 0;
+        }
+        
+        body.dark-theme .feature-item ul li {
+            color: #c0c0c0;
+        }
+        
+        .feature-item ul li::before {
+            content: "•";
+            color: #667eea;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .feature-category {
+                padding: 20px;
+            }
+            
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body class="{{ 'dark-theme' if user_theme == 'dark' else '' }}">
+    <div class="container">
+        <a href="{{ url_for('index') }}" class="back-btn">← {% if lang and t %}{{ t('back', lang) }}{% else %}Назад{% endif %}</a>
+        
+        <div class="header">
+            <h1>⚙️ {% if lang and t %}{{ t('features_title', lang) }}{% else %}Функции сайта{% endif %}</h1>
+            <p style="color: #666;">{% if lang and t %}{{ t('features_description', lang) }}{% else %}Полный список всех доступных функций на нашем сайте{% endif %}</p>
+        </div>
+        
+        <!-- Аутентификация и профиль -->
+        <div class="feature-category">
+            <h2>{% if lang and t %}{{ t('auth_features', lang) }}{% else %}🔐 Аутентификация и профиль{% endif %}</h2>
+            <p>{% if lang and t %}{{ t('auth_features_desc', lang) }}{% else %}Регистрация и вход через email с OTP кодом, управление профилем пользователя{% endif %}</p>
+            <ul class="feature-list">
+                <li>Регистрация через email</li>
+                <li>Вход с OTP кодом (одноразовый пароль)</li>
+                <li>Управление профилем пользователя</li>
+                <li>Просмотр ранга и статистики</li>
+                <li>Установка пароля для входа</li>
+                <li>История входов</li>
+            </ul>
+        </div>
+        
+        <!-- Контент и публикации -->
+        <div class="feature-category">
+            <h2>{% if lang and t %}{{ t('content_features', lang) }}{% else %}📝 Контент и публикации{% endif %}</h2>
+            <p>{% if lang and t %}{{ t('content_features_desc', lang) }}{% else %}Создание, редактирование и удаление постов с множественными фотографиями, тегами и категориями{% endif %}</p>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <h3>📸 Множественные фото</h3>
+                    <ul>
+                        <li>Добавление нескольких изображений к посту</li>
+                        <li>Галерея фотографий</li>
+                    </ul>
+                </div>
+                <div class="feature-item">
+                    <h3>🏷️ Теги и категории</h3>
+                    <ul>
+                        <li>Добавление тегов к постам</li>
+                        <li>Категории автомобилей</li>
+                        <li>Фильтрация по тегам и категориям</li>
+                    </ul>
+                </div>
+                <div class="feature-item">
+                    <h3>✏️ Редактирование</h3>
+                    <ul>
+                        <li>Создание постов</li>
+                        <li>Редактирование своих постов</li>
+                        <li>Удаление постов</li>
+                    </ul>
+                </div>
+                <div class="feature-item">
+                    <h3>🎥 Видео</h3>
+                    <ul>
+                        <li>Встраивание YouTube видео</li>
+                        <li>Видео-обзоры автомобилей</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Взаимодействие -->
+        <div class="feature-category">
+            <h2>{% if lang and t %}{{ t('interaction_features', lang) }}{% else %}💬 Взаимодействие{% endif %}</h2>
+            <p>{% if lang and t %}{{ t('interaction_features_desc', lang) }}{% else %}Комментарии, лайки, избранное, подписки на авторов и уведомления{% endif %}</p>
+            <ul class="feature-list">
+                <li>Комментарии к постам</li>
+                <li>Лайки постов</li>
+                <li>Избранное (сохранение постов)</li>
+                <li>Подписки на авторов</li>
+                <li>Уведомления о новых постах от подписок</li>
+                <li>Уведомления об изменении ранга</li>
+                <li>Уведомления о комментариях</li>
+            </ul>
+        </div>
+        
+        <!-- Поиск и фильтрация -->
+        <div class="feature-category">
+            <h2>{% if lang and t %}{{ t('search_features', lang) }}{% else %}🔍 Поиск и фильтрация{% endif %}</h2>
+            <p>{% if lang and t %}{{ t('search_features_desc', lang) }}{% else %}Расширенный поиск по параметрам, фильтрация по категориям и тегам, сохранение поисковых запросов{% endif %}</p>
+            <ul class="feature-list">
+                <li>Поиск по названию и автору</li>
+                <li>Расширенный поиск (цена, год, мощность, расход)</li>
+                <li>Фильтрация по категориям автомобилей</li>
+                <li>Фильтрация по тегам</li>
+                <li>Сохранение поисковых запросов</li>
+                <li>Быстрый доступ к сохраненным поискам</li>
+            </ul>
+        </div>
+        
+        <!-- Социальные функции -->
+        <div class="feature-category">
+            <h2>{% if lang and t %}{{ t('social_features', lang) }}{% else %}👥 Социальные функции{% endif %}</h2>
+            <p>{% if lang and t %}{{ t('social_features_desc', lang) }}{% else %}Обсуждения, личные сообщения, история просмотров и рекомендации{% endif %}</p>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <h3>💬 Обсуждения</h3>
+                    <ul>
+                        <li>Создание тем для обсуждения</li>
+                        <li>Ответы в обсуждениях</li>
+                        <li>Категории обсуждений</li>
+                        <li>Просмотры обсуждений</li>
+                    </ul>
+                </div>
+                <div class="feature-item">
+                    <h3>✉️ Личные сообщения</h3>
+                    <ul>
+                        <li>Отправка сообщений пользователям</li>
+                        <li>Получение сообщений</li>
+                        <li>Отметка прочитанных сообщений</li>
+                        <li>Счетчик непрочитанных</li>
+                    </ul>
+                </div>
+                <div class="feature-item">
+                    <h3>📜 История просмотров</h3>
+                    <ul>
+                        <li>История просмотренных постов</li>
+                        <li>Рекомендации на основе истории</li>
+                        <li>Персонализированный контент</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Продажа автомобилей -->
+        <div class="feature-category">
+            <h2>{% if lang and t %}{{ t('sales_features', lang) }}{% else %}🚗 Продажа автомобилей{% endif %}</h2>
+            <p>{% if lang and t %}{{ t('sales_features_desc', lang) }}{% else %}Размещение объявлений о продаже с фотографиями, характеристиками и отзывами{% endif %}</p>
+            <ul class="feature-list">
+                <li>Создание объявлений о продаже</li>
+                <li>Добавление фотографий автомобиля</li>
+                <li>Указание цены, года, мощности, расхода</li>
+                <li>Контактная информация</li>
+                <li>Отзывы на объявления</li>
+                <li>Редактирование объявлений</li>
+            </ul>
+        </div>
+        
+        <!-- Административные функции -->
+        <div class="feature-category">
+            <h2>{% if lang and t %}{{ t('admin_features', lang) }}{% else %}👑 Административные функции{% endif %}</h2>
+            <p>{% if lang and t %}{{ t('admin_features_desc', lang) }}{% else %}Панель администратора, управление пользователями, постами, статистика и месячные отчеты{% endif %}</p>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <h3>👥 Управление пользователями</h3>
+                    <ul>
+                        <li>Бан/разбан пользователей</li>
+                        <li>Установка рангов</li>
+                        <li>Удаление пользователей</li>
+                        <li>Просмотр статистики пользователей</li>
+                    </ul>
+                </div>
+                <div class="feature-item">
+                    <h3>📝 Управление контентом</h3>
+                    <ul>
+                        <li>Удаление постов</li>
+                        <li>Редактирование постов</li>
+                        <li>Удаление объявлений</li>
+                        <li>Удаление обсуждений</li>
+                    </ul>
+                </div>
+                <div class="feature-item">
+                    <h3>📊 Статистика и отчеты</h3>
+                    <ul>
+                        <li>Статистика сайта</li>
+                        <li>Месячные отчеты</li>
+                        <li>Графики активности</li>
+                        <li>Топ авторов</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Интерфейс и настройки -->
+        <div class="feature-category">
+            <h2>{% if lang and t %}{{ t('ui_features', lang) }}{% else %}🎨 Интерфейс и настройки{% endif %}</h2>
+            <p>{% if lang and t %}{{ t('ui_features_desc', lang) }}{% else %}Переключение языка (RU/EN), переключение темы (светлая/темная), PWA установка{% endif %}</p>
+            <ul class="feature-list">
+                <li>Переключение языка (Русский/English)</li>
+                <li>Светлая тема оформления</li>
+                <li>Темная тема оформления</li>
+                <li>Сохранение выбора темы</li>
+                <li>PWA (Progressive Web App)</li>
+                <li>Установка приложения на устройство</li>
+                <li>Офлайн режим</li>
+            </ul>
+        </div>
+        
+        <!-- Аналитика -->
+        <div class="feature-category">
+            <h2>{% if lang and t %}{{ t('analytics_features', lang) }}{% else %}📊 Аналитика{% endif %}</h2>
+            <p>{% if lang and t %}{{ t('analytics_features_desc', lang) }}{% else %}Популярные посты, топ авторов, статистика сайта, графики активности{% endif %}</p>
+            <ul class="feature-list">
+                <li>Популярные посты (по лайкам, просмотрам, комментариям)</li>
+                <li>Топ авторов</li>
+                <li>Статистика сайта</li>
+                <li>Графики активности</li>
+                <li>Счетчики просмотров</li>
+            </ul>
+        </div>
+        
+        <!-- Дополнительные функции -->
+        <div class="feature-category">
+            <h2>{% if lang and t %}{{ t('other_features', lang) }}{% else %}🔧 Дополнительные функции{% endif %}</h2>
+            <p>{% if lang and t %}{{ t('other_features_desc', lang) }}{% else %}Сравнение постов, встраивание YouTube видео, правила сайта{% endif %}</p>
+            <ul class="feature-list">
+                <li>Сравнение двух постов рядом</li>
+                <li>Встраивание YouTube видео в посты</li>
+                <li>Правила сайта с информацией о банах</li>
+                <li>Система жалоб на контент</li>
+                <li>Логирование действий пользователей</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

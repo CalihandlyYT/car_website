@@ -1024,6 +1024,8 @@
         <a href="{{ url_for('profile') }}" class="profile-btn">{% if lang and t %}{{ t('profile', lang) }}{% else %}👤 Профиль{% endif %}</a>
         <!-- Правила -->
         <a href="{{ url_for('rules') }}" class="profile-btn" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">{% if lang and t %}{{ t('rules', lang) }}{% else %}📋 Правила{% endif %}</a>
+        <!-- Функции сайта -->
+        <a href="{{ url_for('features') }}" class="profile-btn" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">{% if lang and t %}{{ t('features', lang) }}{% else %}⚙️ Функции сайта{% endif %}</a>
         <!-- Кнопка установки PWA (постоянная) -->
         <a href="#" id="installButton" class="install-btn" onclick="event.preventDefault(); installPWA(); return false;">{% if lang and t %}{{ t('install', lang) }}{% else %}📱 Установить{% endif %}</a>
         <!-- Кнопка выхода -->

@@ -400,11 +400,30 @@ def has_permission(email, required_rank):
 
 # === ФУНКЦИЯ: ЗАПИСЬ В ЛОГ-ФАЙЛ ===
 def log_access(email, action, user_agent=None):
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    ua_string = user_agent if user_agent else "Неизвестно"
-    log_entry = f"[{timestamp}] | {action:20} | {email:25} | {ua_string}\n"
-    with open("access.log", "a", encoding="utf-8") as f:
-        f.write(log_entry)
+    try:
+        # Убеждаемся, что файл существует
+        if not os.path.exists("access.log"):
+            with open("access.log", "w", encoding="utf-8") as f:
+                f.write("=== ЛОГ ДОСТУПА К САЙТУ ЗАПУЩЕН ===\n")
+        
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        ua_string = user_agent if user_agent else "Неизвестно"
+        log_entry = f"[{timestamp}] | {action:20} | {email:25} | {ua_string}\n"
+        
+        # Записываем в файл с обработкой ошибок
+        try:
+            with open("access.log", "a", encoding="utf-8") as f:
+                f.write(log_entry)
+                f.flush()  # Принудительно записываем на диск
+        except (IOError, OSError, PermissionError) as e:
+            # Если не удалось записать в файл, выводим в консоль
+            print(f"ОШИБКА ЗАПИСИ В ЛОГ: {e}")
+            print(f"ЛОГ ЗАПИСЬ: {log_entry.strip()}")
+    except Exception as e:
+        # Критическая ошибка - выводим в консоль
+        print(f"КРИТИЧЕСКАЯ ОШИБКА ЛОГИРОВАНИЯ: {e}")
+        import traceback
+        traceback.print_exc()
 
 # === ГЕНЕРАЦИЯ КОДА ПОДТВЕРЖДЕНИЯ ===
 def generate_otp():
@@ -2269,6 +2288,18 @@ def rules():
     
     return render_template('rules.html', lang=current_lang, t=get_translation, user_theme=user_theme)
 
+@app.route('/features')
+def features():
+    """Страница с функциями сайта"""
+    email = session.get('email')
+    if not email:
+        return redirect(url_for('login'))
+    
+    current_lang = session.get('language', 'ru')
+    user_theme = get_user_theme(email)
+    
+    return render_template('features.html', lang=current_lang, t=get_translation, user_theme=user_theme)
+
 @app.route('/profile')
 def profile():
     email = session.get('email')
@@ -2599,14 +2630,6 @@ def admin_delete_sale(sale_id):
         return redirect(url_for('admin_login'))
     delete_sale(sale_id)
     log_access(f"ADMIN:{session['admin']}", f"УДАЛИЛ ОБЪЯВЛЕНИЕ ID {sale_id}")
-    return redirect(url_for('admin_panel'))
-
-@app.route('/admin/delete_discussion/<int:discussion_id>')
-def admin_delete_discussion(discussion_id):
-    if not session.get('admin'):
-        return redirect(url_for('admin_login'))
-    delete_discussion(discussion_id)
-    log_access(f"ADMIN:{session['admin']}", f"УДАЛИЛ ОБСУЖДЕНИЕ ID {discussion_id}")
     return redirect(url_for('admin_panel'))
 
 @app.route('/admin/delete_discussion/<int:discussion_id>')
@@ -3512,11 +3535,18 @@ def schedule_monthly_reports():
     thread.start()
     print("Планировщик ежемесячных отчетов запущен")
 
+# Инициализируем БД при импорте модуля (для gunicorn и других WSGI серверов)
+# Это гарантирует, что access.log будет создан при любом способе запуска
+init_db()
+
+#if __name__ == '__main__':
+ #   try:
+  #      schedule_monthly_reports()  # Запускаем планировщик отчетов
+#        app.run(debug=False, host='0.0.0.0', port=8000)
+ #   except Exception as e:
+#        print(f"Ошибка при запуске приложения: {e}")
+ #       raise
+
 if __name__ == '__main__':
-    try:
-        init_db()  # Создаём БД при старте
-        schedule_monthly_reports()  # Запускаем планировщик отчетов
-        app.run(debug=False, host='0.0.0.0', port=8000)
-    except Exception as e:
-        print(f"Ошибка при запуске приложения: {e}")
-        raise
+        init_db()
+        app.run()
