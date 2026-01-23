@@ -1085,19 +1085,21 @@
         <div class="car-container">
             <h1>{{ car.name }}</h1>
             {% if car.image %}
-            <div class="car-image-container" onclick="openImageModal('{{ car.image }}', '{{ car.name }}')">
-                <img src="{{ car.image }}" alt="{{ car.name }}" class="car-image" 
+            <div class="car-image-container" id="carImageContainer" onclick="openImageModal('{{ car.image }}', '{{ car.name }}')">
+                <img src="{{ car.image }}" alt="{{ car.name }}" class="car-image" id="carImage"
                      onerror="handleCarImageError(this, '{{ car.image }}')" 
                      onload="handleCarImageLoad(this)"
-                     loading="lazy"
-                     crossorigin="anonymous">
+                     loading="lazy">
             </div>
             {% else %}
-            <div class="car-image-container">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png" 
-                     alt="Изображение недоступно" 
-                     class="car-image" 
-                     style="opacity: 0.5;">
+            <div class="car-image-container" style="cursor: default;">
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 300px; background: #f5f5f5; border-radius: 15px; padding: 40px;">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png" 
+                         alt="Изображение недоступно" 
+                         class="car-image" 
+                         style="opacity: 0.6; max-width: 200px; height: auto;">
+                    <p style="margin-top: 20px; color: #999; font-size: 1.1rem; text-align: center;">Изображение недоступно</p>
+                </div>
             </div>
             {% endif %}
             
@@ -1507,10 +1509,31 @@
             const placeholderUrl = 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png';
             if (img.src !== placeholderUrl && !img.src.includes('No_image_available')) {
                 img.onerror = null; // Предотвращаем бесконечный цикл
-                img.src = placeholderUrl;
-                img.style.opacity = '0.5';
-                img.style.maxHeight = '400px';
-                img.style.objectFit = 'contain';
+                
+                // Получаем контейнер
+                const container = img.closest('.car-image-container');
+                if (container) {
+                    // Убираем клик по модальному окну для placeholder
+                    container.style.cursor = 'default';
+                    container.onclick = null;
+                    container.style.background = '#f5f5f5';
+                    
+                    // Заменяем содержимое контейнера на красивый placeholder
+                    container.innerHTML = `
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 300px; padding: 40px;">
+                            <img src="${placeholderUrl}" 
+                                 alt="Изображение недоступно" 
+                                 style="opacity: 0.6; max-width: 200px; height: auto; margin-bottom: 20px;">
+                            <p style="margin-top: 10px; color: #999; font-size: 1.1rem; text-align: center;">Изображение недоступно</p>
+                        </div>
+                    `;
+                } else {
+                    // Если контейнер не найден, просто заменяем src
+                    img.src = placeholderUrl;
+                    img.style.opacity = '0.6';
+                    img.style.maxHeight = '400px';
+                    img.style.objectFit = 'contain';
+                }
             }
         }
         
