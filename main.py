@@ -1628,8 +1628,21 @@ def delete_user(email):
         # Удаляем все отзывы пользователя (как автора отзывов)
         conn.execute("DELETE FROM sale_reviews WHERE author = ?", (author_name,))
         
+        # Удаляем связанные данные из других таблиц
+        conn.execute("DELETE FROM view_history WHERE user_email = ?", (email,))
+        conn.execute("DELETE FROM saved_searches WHERE user_email = ?", (email,))
+        conn.execute("DELETE FROM discussions WHERE author_email = ?", (email,))
+        conn.execute("DELETE FROM discussion_replies WHERE author_email = ?", (email,))
+        conn.execute("DELETE FROM messages WHERE sender_email = ? OR recipient_email = ?", (email, email))
+        conn.execute("DELETE FROM notifications WHERE user_email = ? OR author_email = ?", (email, email))
+        conn.execute("DELETE FROM favorites WHERE user_email = ?", (email,))
+        conn.execute("DELETE FROM subscriptions WHERE subscriber_email = ? OR author_email = ?", (email, email))
+        conn.execute("DELETE FROM reports WHERE reporter_email = ?", (email,))
+        conn.execute("DELETE FROM post_views WHERE user_email = ?", (email,))
+        
         # Удаляем самого пользователя
         conn.execute("DELETE FROM users WHERE email = ?", (email,))
+        conn.commit()
 
 # === ДАННЫЕ ОБ АВТОМОБИЛЯХ ===
 cars = {
@@ -2208,7 +2221,6 @@ def logout():
 @app.route('/check_rank_change')
 def check_rank_change():
     """Проверить, было ли изменение ранга для текущего пользователя"""
-    from flask import jsonify
     email = session.get('email')
     if not email:
         return jsonify({'has_change': False}), 200
