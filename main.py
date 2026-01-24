@@ -329,6 +329,332 @@ def init_db():
                 conn.execute("ALTER TABLE posts ADD COLUMN views_count INTEGER DEFAULT 0")
             except sqlite3.OperationalError:
                 pass
+            
+            # === НОВЫЕ ТАБЛИЦЫ ДЛЯ РАСШИРЕННЫХ ФУНКЦИЙ ===
+            
+            # Таблица репутации пользователей
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS user_reputation (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_email TEXT NOT NULL,
+                    reputation_score INTEGER DEFAULT 0,
+                    positive_votes INTEGER DEFAULT 0,
+                    negative_votes INTEGER DEFAULT 0,
+                    FOREIGN KEY (user_email) REFERENCES users (email) ON DELETE CASCADE,
+                    UNIQUE(user_email)
+                )
+            """)
+            
+            # Таблица голосов за репутацию
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS reputation_votes (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    voter_email TEXT NOT NULL,
+                    target_email TEXT NOT NULL,
+                    vote_type TEXT NOT NULL,
+                    created_at TEXT NOT NULL,
+                    UNIQUE(voter_email, target_email),
+                    FOREIGN KEY (voter_email) REFERENCES users (email) ON DELETE CASCADE,
+                    FOREIGN KEY (target_email) REFERENCES users (email) ON DELETE CASCADE
+                )
+            """)
+            
+            # Таблица бейджей
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS badges (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL UNIQUE,
+                    description TEXT,
+                    icon TEXT,
+                    category TEXT
+                )
+            """)
+            
+            # Связь пользователей и бейджей
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS user_badges (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_email TEXT NOT NULL,
+                    badge_id INTEGER NOT NULL,
+                    earned_at TEXT NOT NULL,
+                    FOREIGN KEY (user_email) REFERENCES users (email) ON DELETE CASCADE,
+                    FOREIGN KEY (badge_id) REFERENCES badges (id) ON DELETE CASCADE,
+                    UNIQUE(user_email, badge_id)
+                )
+            """)
+            
+            # Таблица друзей
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS friendships (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user1_email TEXT NOT NULL,
+                    user2_email TEXT NOT NULL,
+                    status TEXT DEFAULT 'pending',
+                    created_at TEXT NOT NULL,
+                    accepted_at TEXT,
+                    UNIQUE(user1_email, user2_email),
+                    FOREIGN KEY (user1_email) REFERENCES users (email) ON DELETE CASCADE,
+                    FOREIGN KEY (user2_email) REFERENCES users (email) ON DELETE CASCADE
+                )
+            """)
+            
+            # Таблица групп/клубов
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS groups (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    description TEXT,
+                    creator_email TEXT NOT NULL,
+                    category TEXT,
+                    created_at TEXT NOT NULL,
+                    members_count INTEGER DEFAULT 0,
+                    FOREIGN KEY (creator_email) REFERENCES users (email) ON DELETE CASCADE
+                )
+            """)
+            
+            # Участники групп
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS group_members (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    group_id INTEGER NOT NULL,
+                    user_email TEXT NOT NULL,
+                    role TEXT DEFAULT 'member',
+                    joined_at TEXT NOT NULL,
+                    FOREIGN KEY (group_id) REFERENCES groups (id) ON DELETE CASCADE,
+                    FOREIGN KEY (user_email) REFERENCES users (email) ON DELETE CASCADE,
+                    UNIQUE(group_id, user_email)
+                )
+            """)
+            
+            # Таблица постов в группах
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS group_posts (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    group_id INTEGER NOT NULL,
+                    post_id INTEGER NOT NULL,
+                    created_at TEXT NOT NULL,
+                    FOREIGN KEY (group_id) REFERENCES groups (id) ON DELETE CASCADE,
+                    FOREIGN KEY (post_id) REFERENCES posts (id) ON DELETE CASCADE,
+                    UNIQUE(group_id, post_id)
+                )
+            """)
+            
+            # Премиум-аккаунты
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS premium_accounts (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_email TEXT NOT NULL,
+                    plan_type TEXT NOT NULL,
+                    start_date TEXT NOT NULL,
+                    end_date TEXT NOT NULL,
+                    auto_renew BOOLEAN DEFAULT 1,
+                    created_at TEXT NOT NULL,
+                    FOREIGN KEY (user_email) REFERENCES users (email) ON DELETE CASCADE,
+                    UNIQUE(user_email)
+                )
+            """)
+            
+            # Донаты
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS donations (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    donor_email TEXT NOT NULL,
+                    amount REAL NOT NULL,
+                    currency TEXT DEFAULT 'RUB',
+                    message TEXT,
+                    anonymous BOOLEAN DEFAULT 0,
+                    status TEXT DEFAULT 'pending',
+                    created_at TEXT NOT NULL,
+                    processed_at TEXT,
+                    FOREIGN KEY (donor_email) REFERENCES users (email) ON DELETE CASCADE
+                )
+            """)
+            
+            # Настройки уведомлений
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS notification_settings (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_email TEXT NOT NULL,
+                    email_notifications BOOLEAN DEFAULT 1,
+                    push_notifications BOOLEAN DEFAULT 1,
+                    new_post_notifications BOOLEAN DEFAULT 1,
+                    comment_notifications BOOLEAN DEFAULT 1,
+                    message_notifications BOOLEAN DEFAULT 1,
+                    subscription_notifications BOOLEAN DEFAULT 1,
+                    price_drop_notifications BOOLEAN DEFAULT 1,
+                    FOREIGN KEY (user_email) REFERENCES users (email) ON DELETE CASCADE,
+                    UNIQUE(user_email)
+                )
+            """)
+            
+            # Push подписки для уведомлений
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS push_subscriptions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_email TEXT NOT NULL,
+                    endpoint TEXT NOT NULL,
+                    p256dh TEXT NOT NULL,
+                    auth TEXT NOT NULL,
+                    created_at TEXT NOT NULL,
+                    FOREIGN KEY (user_email) REFERENCES users (email) ON DELETE CASCADE
+                )
+            """)
+            
+            # История сделок
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS transaction_history (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    sale_id INTEGER NOT NULL,
+                    buyer_email TEXT NOT NULL,
+                    seller_email TEXT NOT NULL,
+                    transaction_date TEXT NOT NULL,
+                    status TEXT DEFAULT 'completed',
+                    rating INTEGER,
+                    review TEXT,
+                    FOREIGN KEY (sale_id) REFERENCES sales (id) ON DELETE CASCADE,
+                    FOREIGN KEY (buyer_email) REFERENCES users (email) ON DELETE CASCADE,
+                    FOREIGN KEY (seller_email) REFERENCES users (email) ON DELETE CASCADE
+                )
+            """)
+            
+            # Рейтинг продавцов
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS seller_ratings (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    seller_email TEXT NOT NULL,
+                    rater_email TEXT NOT NULL,
+                    rating INTEGER NOT NULL,
+                    review TEXT,
+                    created_at TEXT NOT NULL,
+                    FOREIGN KEY (seller_email) REFERENCES users (email) ON DELETE CASCADE,
+                    FOREIGN KEY (rater_email) REFERENCES users (email) ON DELETE CASCADE,
+                    UNIQUE(seller_email, rater_email)
+                )
+            """)
+            
+            # Верифицированные продавцы
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS verified_sellers (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_email TEXT NOT NULL,
+                    verified_at TEXT NOT NULL,
+                    verified_by TEXT,
+                    verification_documents TEXT,
+                    FOREIGN KEY (user_email) REFERENCES users (email) ON DELETE CASCADE,
+                    UNIQUE(user_email)
+                )
+            """)
+            
+            # Медиа файлы (видео, аудио, 360 фото)
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS media_files (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    post_id INTEGER,
+                    sale_id INTEGER,
+                    file_type TEXT NOT NULL,
+                    file_url TEXT NOT NULL,
+                    file_name TEXT,
+                    file_size INTEGER,
+                    is_360_photo BOOLEAN DEFAULT 0,
+                    created_at TEXT NOT NULL,
+                    FOREIGN KEY (post_id) REFERENCES posts (id) ON DELETE CASCADE,
+                    FOREIGN KEY (sale_id) REFERENCES sales (id) ON DELETE CASCADE
+                )
+            """)
+            
+            # Интеграции (карты, соцсети)
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS location_data (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    sale_id INTEGER NOT NULL,
+                    post_id INTEGER,
+                    latitude REAL,
+                    longitude REAL,
+                    address TEXT,
+                    city TEXT,
+                    country TEXT,
+                    FOREIGN KEY (sale_id) REFERENCES sales (id) ON DELETE CASCADE,
+                    FOREIGN KEY (post_id) REFERENCES posts (id) ON DELETE CASCADE
+                )
+            """)
+            
+            # Социальные шаринги
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS social_shares (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    post_id INTEGER,
+                    sale_id INTEGER,
+                    user_email TEXT NOT NULL,
+                    platform TEXT NOT NULL,
+                    shared_at TEXT NOT NULL,
+                    FOREIGN KEY (post_id) REFERENCES posts (id) ON DELETE CASCADE,
+                    FOREIGN KEY (sale_id) REFERENCES sales (id) ON DELETE CASCADE,
+                    FOREIGN KEY (user_email) REFERENCES users (email) ON DELETE CASCADE
+                )
+            """)
+            
+            # Добавляем колонки в существующие таблицы
+            try:
+                conn.execute("ALTER TABLE users ADD COLUMN reputation INTEGER DEFAULT 0")
+            except sqlite3.OperationalError:
+                pass
+            try:
+                conn.execute("ALTER TABLE users ADD COLUMN premium_until TEXT DEFAULT NULL")
+            except sqlite3.OperationalError:
+                pass
+            try:
+                conn.execute("ALTER TABLE users ADD COLUMN verified_seller BOOLEAN DEFAULT 0")
+            except sqlite3.OperationalError:
+                pass
+            try:
+                conn.execute("ALTER TABLE sales ADD COLUMN status TEXT DEFAULT 'active'")
+            except sqlite3.OperationalError:
+                pass
+            try:
+                conn.execute("ALTER TABLE sales ADD COLUMN expires_at TEXT DEFAULT NULL")
+            except sqlite3.OperationalError:
+                pass
+            try:
+                conn.execute("ALTER TABLE sales ADD COLUMN views_count INTEGER DEFAULT 0")
+            except sqlite3.OperationalError:
+                pass
+            try:
+                conn.execute("ALTER TABLE sales ADD COLUMN seller_rating REAL DEFAULT 0")
+            except sqlite3.OperationalError:
+                pass
+            try:
+                conn.execute("ALTER TABLE sales ADD COLUMN location_id INTEGER")
+            except sqlite3.OperationalError:
+                pass
+            try:
+                conn.execute("ALTER TABLE posts ADD COLUMN audio_url TEXT DEFAULT NULL")
+            except sqlite3.OperationalError:
+                pass
+            try:
+                conn.execute("ALTER TABLE posts ADD COLUMN is_360_photo BOOLEAN DEFAULT 0")
+            except sqlite3.OperationalError:
+                pass
+            
+            # Инициализируем дефолтные бейджи
+            default_badges = [
+                ('Новичок', 'Ваш первый пост', '🌱', 'achievement'),
+                ('Активный', '10 постов', '🔥', 'activity'),
+                ('Популярный', '100 лайков', '⭐', 'popularity'),
+                ('Эксперт', '50 комментариев', '💬', 'expert'),
+                ('Продавец', 'Первая продажа', '💰', 'sales'),
+                ('Верифицированный', 'Проверенный продавец', '✅', 'verified'),
+                ('Премиум', 'Премиум пользователь', '👑', 'premium'),
+                ('Дружелюбный', '10 друзей', '🤝', 'social')
+            ]
+            for badge in default_badges:
+                try:
+                    conn.execute("""
+                        INSERT OR IGNORE INTO badges (name, description, icon, category)
+                        VALUES (?, ?, ?, ?)
+                    """, badge)
+                except:
+                    pass
+                    
     except Exception as e:
         print(f"Критическая ошибка при инициализации базы данных: {e}")
         import traceback
@@ -1533,10 +1859,13 @@ def get_staff_list():
 # === РАБОТА С ОБЪЯВЛЕНИЯМИ О ПРОДАЖЕ ===
 def create_sale(title, description, image, price, author, contact):
     with sqlite3.connect(DATABASE) as conn:
-        conn.execute("""
-            INSERT INTO sales (title, description, image, price, author, contact, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO sales (title, description, image, price, author, contact, created_at, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 'active')
         """, (title, description or '', image, price, author, contact or '', datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+        conn.commit()
+        return cur.lastrowid
 
 def get_all_sales():
     with sqlite3.connect(DATABASE) as conn:
@@ -1642,6 +1971,496 @@ def delete_user(email):
         
         # Удаляем самого пользователя
         conn.execute("DELETE FROM users WHERE email = ?", (email,))
+        conn.commit()
+
+# === РАБОТА С РЕПУТАЦИЕЙ ===
+def get_user_reputation(user_email):
+    """Получить репутацию пользователя"""
+    with sqlite3.connect(DATABASE) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM user_reputation WHERE user_email = ?", (user_email,))
+        row = cur.fetchone()
+        if row:
+            return dict(row)
+        # Создаем запись, если её нет
+        conn.execute("""
+            INSERT INTO user_reputation (user_email, reputation_score, positive_votes, negative_votes)
+            VALUES (?, 0, 0, 0)
+        """, (user_email,))
+        return {'user_email': user_email, 'reputation_score': 0, 'positive_votes': 0, 'negative_votes': 0}
+
+def vote_reputation(voter_email, target_email, vote_type):
+    """Голосовать за репутацию (positive/negative)"""
+    with sqlite3.connect(DATABASE) as conn:
+        # Проверяем, не голосовал ли уже
+        cur = conn.cursor()
+        cur.execute("SELECT vote_type FROM reputation_votes WHERE voter_email = ? AND target_email = ?", 
+                   (voter_email, target_email))
+        existing = cur.fetchone()
+        
+        if existing:
+            # Обновляем существующий голос
+            old_vote = existing[0]
+            if old_vote == vote_type:
+                return  # Уже проголосовал так же
+            
+            # Меняем голос
+            conn.execute("UPDATE reputation_votes SET vote_type = ? WHERE voter_email = ? AND target_email = ?",
+                        (vote_type, voter_email, target_email))
+            
+            # Обновляем счетчики
+            if old_vote == 'positive':
+                conn.execute("""
+                    UPDATE user_reputation 
+                    SET positive_votes = positive_votes - 1, 
+                        negative_votes = negative_votes + 1,
+                        reputation_score = reputation_score - 2
+                    WHERE user_email = ?
+                """, (target_email,))
+            else:
+                conn.execute("""
+                    UPDATE user_reputation 
+                    SET positive_votes = positive_votes + 1, 
+                        negative_votes = negative_votes - 1,
+                        reputation_score = reputation_score + 2
+                    WHERE user_email = ?
+                """, (target_email,))
+        else:
+            # Новый голос
+            conn.execute("""
+                INSERT INTO reputation_votes (voter_email, target_email, vote_type, created_at)
+                VALUES (?, ?, ?, ?)
+            """, (voter_email, target_email, vote_type, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+            
+            # Обновляем счетчики
+            if vote_type == 'positive':
+                conn.execute("""
+                    UPDATE user_reputation 
+                    SET positive_votes = positive_votes + 1,
+                        reputation_score = reputation_score + 1
+                    WHERE user_email = ?
+                """, (target_email,))
+            else:
+                conn.execute("""
+                    UPDATE user_reputation 
+                    SET negative_votes = negative_votes + 1,
+                        reputation_score = reputation_score - 1
+                    WHERE user_email = ?
+                """, (target_email,))
+        
+        # Обновляем репутацию в таблице users
+        cur.execute("SELECT reputation_score FROM user_reputation WHERE user_email = ?", (target_email,))
+        rep_row = cur.fetchone()
+        if rep_row:
+            conn.execute("UPDATE users SET reputation = ? WHERE email = ?", (rep_row[0], target_email))
+        conn.commit()
+
+# === РАБОТА С БЕЙДЖАМИ ===
+def get_user_badges(user_email):
+    """Получить бейджи пользователя"""
+    with sqlite3.connect(DATABASE) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT b.*, ub.earned_at 
+            FROM badges b
+            INNER JOIN user_badges ub ON b.id = ub.badge_id
+            WHERE ub.user_email = ?
+            ORDER BY ub.earned_at DESC
+        """, (user_email,))
+        return [dict(row) for row in cur.fetchall()]
+
+def award_badge(user_email, badge_id):
+    """Выдать бейдж пользователю"""
+    with sqlite3.connect(DATABASE) as conn:
+        try:
+            conn.execute("""
+                INSERT INTO user_badges (user_email, badge_id, earned_at)
+                VALUES (?, ?, ?)
+            """, (user_email, badge_id, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+            conn.commit()
+            return True
+        except sqlite3.IntegrityError:
+            return False  # Бейдж уже есть
+
+def check_and_award_badges(user_email):
+    """Проверить и выдать бейджи на основе активности"""
+    with sqlite3.connect(DATABASE) as conn:
+        # Подсчитываем статистику
+        cur = conn.cursor()
+        
+        # Количество постов
+        cur.execute("SELECT COUNT(*) FROM posts WHERE author = ?", (user_email.split('@')[0].title(),))
+        posts_count = cur.fetchone()[0]
+        
+        # Количество лайков
+        cur.execute("""
+            SELECT COUNT(*) FROM likes l
+            INNER JOIN posts p ON l.post_id = p.id
+            WHERE p.author = ?
+        """, (user_email.split('@')[0].title(),))
+        likes_count = cur.fetchone()[0]
+        
+        # Количество комментариев
+        cur.execute("SELECT COUNT(*) FROM comments WHERE author = ?", (user_email.split('@')[0].title(),))
+        comments_count = cur.fetchone()[0]
+        
+        # Количество продаж
+        cur.execute("SELECT COUNT(*) FROM sales WHERE author = ?", (user_email.split('@')[0].title(),))
+        sales_count = cur.fetchone()[0]
+        
+        # Количество друзей
+        cur.execute("""
+            SELECT COUNT(*) FROM friendships 
+            WHERE (user1_email = ? OR user2_email = ?) AND status = 'accepted'
+        """, (user_email, user_email))
+        friends_count = cur.fetchone()[0]
+        
+        # Выдаем бейджи
+        badges_to_check = [
+            (1, posts_count >= 1),  # Новичок
+            (2, posts_count >= 10),  # Активный
+            (3, likes_count >= 100),  # Популярный
+            (4, comments_count >= 50),  # Эксперт
+            (5, sales_count >= 1),  # Продавец
+            (8, friends_count >= 10),  # Дружелюбный
+        ]
+        
+        for badge_id, condition in badges_to_check:
+            if condition:
+                award_badge(user_email, badge_id)
+
+# === РАБОТА С ДРУЗЬЯМИ ===
+def send_friend_request(user1_email, user2_email):
+    """Отправить запрос в друзья"""
+    with sqlite3.connect(DATABASE) as conn:
+        try:
+            conn.execute("""
+                INSERT INTO friendships (user1_email, user2_email, status, created_at)
+                VALUES (?, ?, 'pending', ?)
+            """, (user1_email, user2_email, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+            conn.commit()
+            return True
+        except sqlite3.IntegrityError:
+            return False
+
+def accept_friend_request(user1_email, user2_email):
+    """Принять запрос в друзья"""
+    with sqlite3.connect(DATABASE) as conn:
+        conn.execute("""
+            UPDATE friendships 
+            SET status = 'accepted', accepted_at = ?
+            WHERE ((user1_email = ? AND user2_email = ?) OR (user1_email = ? AND user2_email = ?))
+            AND status = 'pending'
+        """, (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), user1_email, user2_email, user2_email, user1_email))
+        conn.commit()
+
+def get_friends(user_email):
+    """Получить список друзей"""
+    with sqlite3.connect(DATABASE) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT u.email, u.rank, u.reputation,
+                   CASE WHEN f.user1_email = ? THEN f.user2_email ELSE f.user1_email END as friend_email
+            FROM friendships f
+            INNER JOIN users u ON (CASE WHEN f.user1_email = ? THEN f.user2_email ELSE f.user1_email END) = u.email
+            WHERE (f.user1_email = ? OR f.user2_email = ?) AND f.status = 'accepted'
+        """, (user_email, user_email, user_email, user_email))
+        return [dict(row) for row in cur.fetchall()]
+
+def get_friend_requests(user_email):
+    """Получить входящие запросы в друзья"""
+    with sqlite3.connect(DATABASE) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT u.email, u.rank, f.created_at
+            FROM friendships f
+            INNER JOIN users u ON f.user1_email = u.email
+            WHERE f.user2_email = ? AND f.status = 'pending'
+        """, (user_email,))
+        return [dict(row) for row in cur.fetchall()]
+
+# === РАБОТА С ГРУППАМИ ===
+def create_group(name, description, creator_email, category=None):
+    """Создать группу"""
+    with sqlite3.connect(DATABASE) as conn:
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO groups (name, description, creator_email, category, created_at, members_count)
+            VALUES (?, ?, ?, ?, ?, 1)
+        """, (name, description, creator_email, category, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+        group_id = cur.lastrowid
+        # Добавляем создателя как администратора
+        conn.execute("""
+            INSERT INTO group_members (group_id, user_email, role, joined_at)
+            VALUES (?, ?, 'admin', ?)
+        """, (group_id, creator_email, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+        conn.commit()
+        return group_id
+
+def join_group(group_id, user_email):
+    """Присоединиться к группе"""
+    with sqlite3.connect(DATABASE) as conn:
+        try:
+            conn.execute("""
+                INSERT INTO group_members (group_id, user_email, role, joined_at)
+                VALUES (?, ?, 'member', ?)
+            """, (group_id, user_email, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+            conn.execute("UPDATE groups SET members_count = members_count + 1 WHERE id = ?", (group_id,))
+            conn.commit()
+            return True
+        except sqlite3.IntegrityError:
+            return False
+
+def get_groups(category=None, limit=50):
+    """Получить список групп"""
+    with sqlite3.connect(DATABASE) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        if category:
+            cur.execute("SELECT * FROM groups WHERE category = ? ORDER BY members_count DESC, created_at DESC LIMIT ?", 
+                       (category, limit))
+        else:
+            cur.execute("SELECT * FROM groups ORDER BY members_count DESC, created_at DESC LIMIT ?", (limit,))
+        return [dict(row) for row in cur.fetchall()]
+
+# === РАБОТА С ПРЕМИУМ-АККАУНТАМИ ===
+def is_premium_user(user_email):
+    """Проверить, является ли пользователь премиум"""
+    with sqlite3.connect(DATABASE) as conn:
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT * FROM premium_accounts 
+            WHERE user_email = ? AND end_date > datetime('now')
+        """, (user_email,))
+        return cur.fetchone() is not None
+
+def create_premium_account(user_email, plan_type, months=1):
+    """Создать премиум-аккаунт"""
+    with sqlite3.connect(DATABASE) as conn:
+        start_date = datetime.now()
+        end_date = start_date + timedelta(days=months * 30)
+        
+        conn.execute("""
+            INSERT OR REPLACE INTO premium_accounts 
+            (user_email, plan_type, start_date, end_date, auto_renew, created_at)
+            VALUES (?, ?, ?, ?, 1, ?)
+        """, (user_email, plan_type, start_date.strftime("%Y-%m-%d %H:%M:%S"), 
+              end_date.strftime("%Y-%m-%d %H:%M:%S"), datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+        
+        conn.execute("UPDATE users SET premium_until = ? WHERE email = ?", 
+                    (end_date.strftime("%Y-%m-%d %H:%M:%S"), user_email))
+        conn.commit()
+
+# === РАБОТА С ДОНАТАМИ ===
+def create_donation(donor_email, amount, currency='RUB', message=None, anonymous=False):
+    """Создать донат"""
+    with sqlite3.connect(DATABASE) as conn:
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO donations (donor_email, amount, currency, message, anonymous, status, created_at)
+            VALUES (?, ?, ?, ?, ?, 'completed', ?)
+        """, (donor_email, amount, currency, message, anonymous, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+        conn.commit()
+        return cur.lastrowid
+
+def get_donations(limit=50):
+    """Получить список донатов"""
+    with sqlite3.connect(DATABASE) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT d.*, 
+                   CASE WHEN d.anonymous = 1 THEN 'Анонимный' ELSE u.email END as donor_display
+            FROM donations d
+            LEFT JOIN users u ON d.donor_email = u.email
+            WHERE d.status = 'completed'
+            ORDER BY d.created_at DESC
+            LIMIT ?
+        """, (limit,))
+        return [dict(row) for row in cur.fetchall()]
+
+# === РАБОТА С УВЕДОМЛЕНИЯМИ (РАСШИРЕННЫЕ) ===
+def get_notification_settings(user_email):
+    """Получить настройки уведомлений"""
+    with sqlite3.connect(DATABASE) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM notification_settings WHERE user_email = ?", (user_email,))
+        row = cur.fetchone()
+        if row:
+            return dict(row)
+        # Создаем дефолтные настройки
+        conn.execute("""
+            INSERT INTO notification_settings 
+            (user_email, email_notifications, push_notifications, new_post_notifications, 
+             comment_notifications, message_notifications, subscription_notifications, price_drop_notifications)
+            VALUES (?, 1, 1, 1, 1, 1, 1, 1)
+        """, (user_email,))
+        conn.commit()
+        return get_notification_settings(user_email)
+
+def update_notification_settings(user_email, **settings):
+    """Обновить настройки уведомлений"""
+    with sqlite3.connect(DATABASE) as conn:
+        fields = ", ".join([f"{key} = ?" for key in settings.keys()])
+        values = list(settings.values()) + [user_email]
+        conn.execute(f"UPDATE notification_settings SET {fields} WHERE user_email = ?", values)
+        conn.commit()
+
+def send_notification_with_settings(user_email, notification_type, message, post_id=None, author_email=None):
+    """Отправить уведомление с учетом настроек"""
+    settings = get_notification_settings(user_email)
+    
+    # Проверяем, нужно ли отправлять уведомление
+    should_send = False
+    if notification_type == 'new_post' and settings.get('new_post_notifications', 1):
+        should_send = True
+    elif notification_type == 'comment' and settings.get('comment_notifications', 1):
+        should_send = True
+    elif notification_type == 'message' and settings.get('message_notifications', 1):
+        should_send = True
+    elif notification_type == 'subscription' and settings.get('subscription_notifications', 1):
+        should_send = True
+    elif notification_type == 'price_drop' and settings.get('price_drop_notifications', 1):
+        should_send = True
+    else:
+        should_send = True  # Для других типов отправляем по умолчанию
+    
+    if should_send:
+        create_notification(user_email, notification_type, message, post_id, author_email)
+        
+        # Отправляем email, если включено
+        if settings.get('email_notifications', 1):
+            # Здесь можно добавить отправку email
+            pass
+        
+        # Отправляем push, если включено
+        if settings.get('push_notifications', 1):
+            # Здесь можно добавить отправку push уведомлений
+            pass
+
+# === РАБОТА С ПРОДАЖАМИ (РАСШИРЕННЫЕ) ===
+def update_sale_status(sale_id, status):
+    """Обновить статус объявления"""
+    with sqlite3.connect(DATABASE) as conn:
+        conn.execute("UPDATE sales SET status = ? WHERE id = ?", (status, sale_id))
+        conn.commit()
+
+def add_sale_view(sale_id):
+    """Добавить просмотр объявления"""
+    with sqlite3.connect(DATABASE) as conn:
+        conn.execute("UPDATE sales SET views_count = COALESCE(views_count, 0) + 1 WHERE id = ?", (sale_id,))
+        conn.commit()
+
+def rate_seller(seller_email, rater_email, rating, review=None):
+    """Оценить продавца"""
+    with sqlite3.connect(DATABASE) as conn:
+        conn.execute("""
+            INSERT OR REPLACE INTO seller_ratings (seller_email, rater_email, rating, review, created_at)
+            VALUES (?, ?, ?, ?, ?)
+        """, (seller_email, rater_email, rating, review, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+        
+        # Пересчитываем средний рейтинг
+        cur = conn.cursor()
+        cur.execute("SELECT AVG(rating) FROM seller_ratings WHERE seller_email = ?", (seller_email,))
+        avg_rating = cur.fetchone()[0] or 0
+        
+        conn.execute("UPDATE users SET reputation = ? WHERE email = ?", (int(avg_rating * 20), seller_email))
+        conn.execute("UPDATE sales SET seller_rating = ? WHERE author = ?", 
+                    (avg_rating, seller_email.split('@')[0].title()))
+        conn.commit()
+
+def get_seller_rating(seller_email):
+    """Получить рейтинг продавца"""
+    with sqlite3.connect(DATABASE) as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT AVG(rating) as avg_rating, COUNT(*) as count FROM seller_ratings WHERE seller_email = ?", 
+                   (seller_email,))
+        row = cur.fetchone()
+        return {'avg_rating': row[0] or 0, 'count': row[1] or 0}
+
+def verify_seller(user_email, verified_by=None, documents=None):
+    """Верифицировать продавца"""
+    with sqlite3.connect(DATABASE) as conn:
+        conn.execute("""
+            INSERT OR REPLACE INTO verified_sellers (user_email, verified_at, verified_by, verification_documents)
+            VALUES (?, ?, ?, ?)
+        """, (user_email, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), verified_by, documents))
+        conn.execute("UPDATE users SET verified_seller = 1 WHERE email = ?", (user_email,))
+        conn.commit()
+        # Выдаем бейдж "Верифицированный"
+        award_badge(user_email, 6)
+
+def create_transaction(sale_id, buyer_email, seller_email):
+    """Создать запись о сделке"""
+    with sqlite3.connect(DATABASE) as conn:
+        conn.execute("""
+            INSERT INTO transaction_history (sale_id, buyer_email, seller_email, transaction_date, status)
+            VALUES (?, ?, ?, ?, 'completed')
+        """, (sale_id, buyer_email, seller_email, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+        conn.execute("UPDATE sales SET status = 'sold' WHERE id = ?", (sale_id,))
+        conn.commit()
+
+# === РАБОТА С МЕДИА ===
+def add_media_file(post_id=None, sale_id=None, file_type='image', file_url=None, file_name=None, 
+                   file_size=None, is_360_photo=False):
+    """Добавить медиа файл"""
+    with sqlite3.connect(DATABASE) as conn:
+        conn.execute("""
+            INSERT INTO media_files (post_id, sale_id, file_type, file_url, file_name, file_size, is_360_photo, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (post_id, sale_id, file_type, file_url, file_name, file_size, is_360_photo, 
+              datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+        conn.commit()
+
+def get_media_files(post_id=None, sale_id=None):
+    """Получить медиа файлы"""
+    with sqlite3.connect(DATABASE) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        if post_id:
+            cur.execute("SELECT * FROM media_files WHERE post_id = ? ORDER BY created_at", (post_id,))
+        elif sale_id:
+            cur.execute("SELECT * FROM media_files WHERE sale_id = ? ORDER BY created_at", (sale_id,))
+        else:
+            return []
+        return [dict(row) for row in cur.fetchall()]
+
+# === РАБОТА С ЛОКАЦИЯМИ ===
+def add_location(sale_id=None, post_id=None, latitude=None, longitude=None, address=None, city=None, country=None):
+    """Добавить данные о локации"""
+    with sqlite3.connect(DATABASE) as conn:
+        conn.execute("""
+            INSERT INTO location_data (sale_id, post_id, latitude, longitude, address, city, country)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (sale_id, post_id, latitude, longitude, address, city, country))
+        conn.commit()
+
+def get_location(sale_id=None, post_id=None):
+    """Получить данные о локации"""
+    with sqlite3.connect(DATABASE) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        if sale_id:
+            cur.execute("SELECT * FROM location_data WHERE sale_id = ?", (sale_id,))
+        elif post_id:
+            cur.execute("SELECT * FROM location_data WHERE post_id = ?", (post_id,))
+        else:
+            return None
+        row = cur.fetchone()
+        return dict(row) if row else None
+
+def add_social_share(post_id=None, sale_id=None, user_email=None, platform='facebook'):
+    """Добавить запись о шаринге в соцсети"""
+    with sqlite3.connect(DATABASE) as conn:
+        conn.execute("""
+            INSERT INTO social_shares (post_id, sale_id, user_email, platform, shared_at)
+            VALUES (?, ?, ?, ?, ?)
+        """, (post_id, sale_id, user_email, platform, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
         conn.commit()
 
 # === ДАННЫЕ ОБ АВТОМОБИЛЯХ ===
@@ -2859,7 +3678,14 @@ def create_sale_route():
             return render_template('create_sale.html', error="Заполните все обязательные поля")
         
         author = email.split('@')[0].title()
-        create_sale(title, description, image, price, author, contact)
+        sale_id = create_sale(title, description, image, price, author, contact)
+        
+        # Устанавливаем статус 'active' по умолчанию
+        update_sale_status(sale_id, 'active')
+        
+        # Проверяем и выдаем бейджи
+        check_and_award_badges(email)
+        
         log_access(email, "СОЗДАЛ ОБЪЯВЛЕНИЕ", title)
         return redirect(url_for('sales'))
     
@@ -2878,9 +3704,30 @@ def view_sale(sale_id):
     if not sale:
         return "<h1>Объявление не найдено</h1>", 404
     
+    # Добавляем просмотр
+    add_sale_view(sale_id)
+    
+    # Получаем рейтинг продавца
+    seller_email = sale['author'].lower() + '@example.com'
+    seller_rating = get_seller_rating(seller_email)
+    
+    # Проверяем, верифицирован ли продавец
+    with sqlite3.connect(DATABASE) as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM verified_sellers WHERE user_email = ?", (seller_email,))
+        is_verified = cur.fetchone() is not None
+    
     reviews = get_sale_reviews(sale_id)
+    location = get_location(sale_id=sale_id)
+    media_files = get_media_files(sale_id=sale_id)
+    
+    current_lang = session.get('language', 'ru')
+    user_theme = get_user_theme(email)
+    
     log_access(email, "ОТКРЫЛ ОБЪЯВЛЕНИЕ", f"ID {sale_id}")
-    return render_template('sale.html', sale=sale, reviews=reviews)
+    return render_template('sale.html', sale=sale, reviews=reviews, seller_rating=seller_rating,
+                         is_verified=is_verified, location=location, media_files=media_files,
+                         lang=current_lang, t=get_translation, user_theme=user_theme)
 
 @app.route('/add_sale_review/<int:sale_id>', methods=['POST'])
 def add_sale_review_route(sale_id):
@@ -3561,6 +4408,302 @@ except Exception as e:
     print(f"Предупреждение: Ошибка при инициализации БД при импорте: {e}")
     import traceback
     traceback.print_exc()
+
+# === НОВЫЕ МАРШРУТЫ ДЛЯ РАСШИРЕННЫХ ФУНКЦИЙ ===
+
+# Репутация
+@app.route('/reputation/<user_email>')
+def view_reputation(user_email):
+    email = session.get('email')
+    if not email:
+        return redirect(url_for('login'))
+    
+    reputation = get_user_reputation(user_email)
+    badges = get_user_badges(user_email)
+    current_lang = session.get('language', 'ru')
+    user_theme = get_user_theme(email)
+    
+    return render_template('reputation.html', reputation=reputation, badges=badges, 
+                         target_email=user_email, lang=current_lang, t=get_translation, user_theme=user_theme)
+
+@app.route('/vote_reputation', methods=['POST'])
+def vote_reputation_route():
+    email = session.get('email')
+    if not email:
+        return jsonify({'success': False, 'error': 'Not authorized'}), 401
+    
+    data = request.json
+    target_email = data.get('target_email')
+    vote_type = data.get('vote_type')
+    
+    if target_email == email:
+        return jsonify({'success': False, 'error': 'Cannot vote for yourself'}), 400
+    
+    vote_reputation(email, target_email, vote_type)
+    return jsonify({'success': True})
+
+# Друзья
+@app.route('/friends')
+def friends():
+    email = session.get('email')
+    if not email:
+        return redirect(url_for('login'))
+    
+    friends_list = get_friends(email)
+    requests_list = get_friend_requests(email)
+    current_lang = session.get('language', 'ru')
+    user_theme = get_user_theme(email)
+    
+    return render_template('friends.html', friends=friends_list, requests=requests_list,
+                         lang=current_lang, t=get_translation, user_theme=user_theme)
+
+@app.route('/send_friend_request', methods=['POST'])
+def send_friend_request_route():
+    email = session.get('email')
+    if not email:
+        return jsonify({'success': False}), 401
+    
+    data = request.json
+    target_email = data.get('target_email')
+    
+    if send_friend_request(email, target_email):
+        return jsonify({'success': True})
+    return jsonify({'success': False, 'error': 'Request already exists'}), 400
+
+@app.route('/accept_friend_request', methods=['POST'])
+def accept_friend_request_route():
+    email = session.get('email')
+    if not email:
+        return jsonify({'success': False}), 401
+    
+    data = request.json
+    user1_email = data.get('user1_email')
+    user2_email = data.get('user2_email')
+    
+    accept_friend_request(user1_email, user2_email)
+    check_and_award_badges(email)  # Проверяем бейджи
+    return jsonify({'success': True})
+
+# Группы
+@app.route('/groups')
+def groups():
+    email = session.get('email')
+    if not email:
+        return redirect(url_for('login'))
+    
+    category = request.args.get('category')
+    groups_list = get_groups(category=category)
+    current_lang = session.get('language', 'ru')
+    user_theme = get_user_theme(email)
+    
+    return render_template('groups.html', groups=groups_list, category=category,
+                         lang=current_lang, t=get_translation, user_theme=user_theme)
+
+@app.route('/create_group', methods=['GET', 'POST'])
+def create_group_route():
+    email = session.get('email')
+    if not email:
+        return redirect(url_for('login'))
+    
+    if request.method == 'POST':
+        name = request.form.get('name')
+        description = request.form.get('description')
+        category = request.form.get('category')
+        
+        if name:
+            group_id = create_group(name, description, email, category)
+            return redirect(url_for('groups'))
+    
+    current_lang = session.get('language', 'ru')
+    user_theme = get_user_theme(email)
+    return render_template('create_group.html', lang=current_lang, t=get_translation, user_theme=user_theme)
+
+@app.route('/join_group/<int:group_id>', methods=['POST'])
+def join_group_route(group_id):
+    email = session.get('email')
+    if not email:
+        return jsonify({'success': False}), 401
+    
+    if join_group(group_id, email):
+        return jsonify({'success': True})
+    return jsonify({'success': False, 'error': 'Already a member'}), 400
+
+# Премиум
+@app.route('/premium')
+def premium():
+    email = session.get('email')
+    if not email:
+        return redirect(url_for('login'))
+    
+    is_premium = is_premium_user(email)
+    current_lang = session.get('language', 'ru')
+    user_theme = get_user_theme(email)
+    
+    return render_template('premium.html', is_premium=is_premium,
+                         lang=current_lang, t=get_translation, user_theme=user_theme)
+
+@app.route('/purchase_premium', methods=['POST'])
+def purchase_premium_route():
+    email = session.get('email')
+    if not email:
+        return jsonify({'success': False}), 401
+    
+    data = request.json
+    plan_type = data.get('plan_type', 'basic')
+    months = int(data.get('months', 1))
+    
+    # В реальном приложении здесь была бы интеграция с платежной системой
+    create_premium_account(email, plan_type, months)
+    award_badge(email, 7)  # Бейдж "Премиум"
+    
+    return jsonify({'success': True, 'message': 'Premium account activated'})
+
+# Донаты
+@app.route('/donations')
+def donations():
+    email = session.get('email')
+    if not email:
+        return redirect(url_for('login'))
+    
+    donations_list = get_donations()
+    current_lang = session.get('language', 'ru')
+    user_theme = get_user_theme(email)
+    
+    return render_template('donations.html', donations=donations_list,
+                         lang=current_lang, t=get_translation, user_theme=user_theme)
+
+@app.route('/create_donation', methods=['POST'])
+def create_donation_route():
+    email = session.get('email')
+    if not email:
+        return jsonify({'success': False}), 401
+    
+    data = request.json
+    amount = float(data.get('amount', 0))
+    currency = data.get('currency', 'RUB')
+    message = data.get('message')
+    anonymous = data.get('anonymous', False)
+    
+    if amount > 0:
+        donation_id = create_donation(email, amount, currency, message, anonymous)
+        return jsonify({'success': True, 'donation_id': donation_id})
+    
+    return jsonify({'success': False, 'error': 'Invalid amount'}), 400
+
+# Настройки уведомлений
+@app.route('/notification_settings')
+def notification_settings():
+    email = session.get('email')
+    if not email:
+        return redirect(url_for('login'))
+    
+    settings = get_notification_settings(email)
+    current_lang = session.get('language', 'ru')
+    user_theme = get_user_theme(email)
+    
+    return render_template('notification_settings.html', settings=settings,
+                         lang=current_lang, t=get_translation, user_theme=user_theme)
+
+@app.route('/update_notification_settings', methods=['POST'])
+def update_notification_settings_route():
+    email = session.get('email')
+    if not email:
+        return jsonify({'success': False}), 401
+    
+    data = request.json
+    update_notification_settings(email, **data)
+    return jsonify({'success': True})
+
+# Улучшения продаж
+@app.route('/rate_seller', methods=['POST'])
+def rate_seller_route():
+    email = session.get('email')
+    if not email:
+        return jsonify({'success': False}), 401
+    
+    data = request.json
+    seller_email = data.get('seller_email')
+    rating = int(data.get('rating', 5))
+    review = data.get('review')
+    
+    rate_seller(seller_email, email, rating, review)
+    return jsonify({'success': True})
+
+@app.route('/verify_seller/<user_email>', methods=['POST'])
+def verify_seller_route(user_email):
+    email = session.get('email')
+    if not email or not has_permission(email, 'модератор'):
+        return jsonify({'success': False}), 403
+    
+    verify_seller(user_email, verified_by=email)
+    return jsonify({'success': True})
+
+@app.route('/complete_transaction', methods=['POST'])
+def complete_transaction_route():
+    email = session.get('email')
+    if not email:
+        return jsonify({'success': False}), 401
+    
+    data = request.json
+    sale_id = int(data.get('sale_id'))
+    seller_email = data.get('seller_email')
+    
+    create_transaction(sale_id, email, seller_email)
+    return jsonify({'success': True})
+
+# Медиа
+@app.route('/upload_media', methods=['POST'])
+def upload_media_route():
+    email = session.get('email')
+    if not email:
+        return jsonify({'success': False}), 401
+    
+    # В реальном приложении здесь была бы загрузка файлов
+    data = request.json
+    post_id = data.get('post_id')
+    sale_id = data.get('sale_id')
+    file_type = data.get('file_type', 'image')
+    file_url = data.get('file_url')
+    is_360 = data.get('is_360_photo', False)
+    
+    add_media_file(post_id=post_id, sale_id=sale_id, file_type=file_type, 
+                  file_url=file_url, is_360_photo=is_360)
+    return jsonify({'success': True})
+
+# Локации
+@app.route('/add_location', methods=['POST'])
+def add_location_route():
+    email = session.get('email')
+    if not email:
+        return jsonify({'success': False}), 401
+    
+    data = request.json
+    sale_id = data.get('sale_id')
+    post_id = data.get('post_id')
+    latitude = data.get('latitude')
+    longitude = data.get('longitude')
+    address = data.get('address')
+    city = data.get('city')
+    country = data.get('country')
+    
+    add_location(sale_id=sale_id, post_id=post_id, latitude=latitude, longitude=longitude,
+                address=address, city=city, country=country)
+    return jsonify({'success': True})
+
+# Социальные шаринги
+@app.route('/share', methods=['POST'])
+def share_route():
+    email = session.get('email')
+    if not email:
+        return jsonify({'success': False}), 401
+    
+    data = request.json
+    post_id = data.get('post_id')
+    sale_id = data.get('sale_id')
+    platform = data.get('platform', 'facebook')
+    
+    add_social_share(post_id=post_id, sale_id=sale_id, user_email=email, platform=platform)
+    return jsonify({'success': True})
 
 # Флаг для отслеживания запуска планировщика
 _scheduler_started = False
