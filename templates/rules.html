@@ -256,12 +256,176 @@
         </div>
         
         <div class="rule-section">
-            <h2>5. {% if lang and t %}{{ t('violations_rules', lang) }}{% else %}Нарушения и санкции{% endif %}</h2>
+            <h2>5. {% if lang and t %}{{ t('account_rules', lang) }}{% else %}Правила использования аккаунта{% endif %}</h2>
+            <ul>
+                <li>{% if lang and t %}{{ t('rule_one_account', lang) }}{% else %}Один пользователь может иметь только один аккаунт{% endif %}
+                    <span style="color: #e74c3c; font-weight: 600;"> - {% if lang and t %}{{ t('ban_30_days', lang) }}{% else %}1-й раз: бан на 30 дней, 2-й раз: постоянный бан{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_account_sharing', lang) }}{% else %}Запрещена передача аккаунта третьим лицам{% endif %}
+                    <span style="color: #e74c3c; font-weight: 600;"> - {% if lang and t %}{{ t('ban_permanent', lang) }}{% else %}Немедленный постоянный бан{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_fake_account', lang) }}{% else %}Запрещено создание фейковых аккаунтов или использование чужих данных{% endif %}
+                    <span style="color: #e74c3c; font-weight: 600;"> - {% if lang and t %}{{ t('ban_permanent', lang) }}{% else %}Немедленный постоянный бан{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_password', lang) }}{% else %}Используйте надежный пароль и не делитесь им с другими{% endif %}
+                    <span style="color: #f39c12; font-weight: 600;"> - {% if lang and t %}{{ t('ban_warning', lang) }}{% else %}1-й раз: предупреждение, 2-й раз: бан на 1 день{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_email', lang) }}{% else %}Используйте реальный и рабочий email адрес{% endif %}
+                    <span style="color: #f39c12; font-weight: 600;"> - {% if lang and t %}{{ t('ban_1_day', lang) }}{% else %}1-й раз: предупреждение, 2-й раз: бан на 1 день, 3-й раз: бан на 7 дней{% endif %}</span>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="rule-section">
+            <h2>6. {% if lang and t %}{{ t('moderation_rules', lang) }}{% else %}Правила модерации и жалоб{% endif %}</h2>
+            <ul>
+                <li>{% if lang and t %}{{ t('rule_report', lang) }}{% else %}Используйте функцию жалобы для сообщения о нарушениях{% endif %}
+                    <span style="color: #27ae60; font-weight: 600;"> - {% if lang and t %}{{ t('no_penalty', lang) }}{% else %}Без штрафных санкций{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_false_report', lang) }}{% else %}Запрещено подавать ложные жалобы или злоупотреблять системой жалоб{% endif %}
+                    <span style="color: #e74c3c; font-weight: 600;"> - {% if lang and t %}{{ t('ban_7_days', lang) }}{% else %}1-й раз: бан на 7 дней, 2-й раз: бан на 30 дней, 3-й раз: постоянный бан{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_moderator', lang) }}{% else %}Уважайте решения модераторов и администраторов{% endif %}
+                    <span style="color: #e74c3c; font-weight: 600;"> - {% if lang and t %}{{ t('ban_3_days', lang) }}{% else %}1-й раз: предупреждение, 2-й раз: бан на 3 дня, 3-й раз: бан на 14 дней{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_appeal_process', lang) }}{% else %}Обжалование решений модерации возможно через официальные каналы{% endif %}
+                    <span style="color: #27ae60; font-weight: 600;"> - {% if lang and t %}{{ t('no_penalty', lang) }}{% else %}Без штрафных санкций{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_public_discussion', lang) }}{% else %}Запрещено публично обсуждать действия модерации в комментариях или постах{% endif %}
+                    <span style="color: #f39c12; font-weight: 600;"> - {% if lang and t %}{{ t('ban_1_day', lang) }}{% else %}1-й раз: предупреждение, 2-й раз: бан на 1 день, 3-й раз: бан на 7 дней{% endif %}</span>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="rule-section">
+            <h2>7. {% if lang and t %}{{ t('technical_rules', lang) }}{% else %}Технические правила{% endif %}</h2>
+            <ul>
+                <li>{% if lang and t %}{{ t('rule_automation', lang) }}{% else %}Запрещено использование ботов, скриптов и автоматизации{% endif %}
+                    <span style="color: #e74c3c; font-weight: 600;"> - {% if lang and t %}{{ t('ban_permanent', lang) }}{% else %}Немедленный постоянный бан{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_exploits', lang) }}{% else %}Запрещено использование уязвимостей и эксплойтов сайта{% endif %}
+                    <span style="color: #e74c3c; font-weight: 600;"> - {% if lang and t %}{{ t('ban_permanent', lang) }}{% else %}Немедленный постоянный бан{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_ddos', lang) }}{% else %}Запрещены любые действия, направленные на перегрузку сервера{% endif %}
+                    <span style="color: #e74c3c; font-weight: 600;"> - {% if lang and t %}{{ t('ban_permanent', lang) }}{% else %}Немедленный постоянный бан{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_virus', lang) }}{% else %}Запрещено размещение вредоносного ПО, вирусов или ссылок на них{% endif %}
+                    <span style="color: #e74c3c; font-weight: 600;"> - {% if lang and t %}{{ t('ban_permanent', lang) }}{% else %}Немедленный постоянный бан{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_links', lang) }}{% else %}Ссылки на внешние ресурсы должны быть безопасными и релевантными{% endif %}
+                    <span style="color: #f39c12; font-weight: 600;"> - {% if lang and t %}{{ t('ban_3_days', lang) }}{% else %}1-й раз: предупреждение, 2-й раз: бан на 3 дня, 3-й раз: бан на 14 дней{% endif %}</span>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="rule-section">
+            <h2>8. {% if lang and t %}{{ t('discussion_rules', lang) }}{% else %}Правила обсуждений и форума{% endif %}</h2>
+            <ul>
+                <li>{% if lang and t %}{{ t('rule_topic', lang) }}{% else %}Создавайте обсуждения по релевантным темам{% endif %}
+                    <span style="color: #f39c12; font-weight: 600;"> - {% if lang and t %}{{ t('ban_warning', lang) }}{% else %}1-й раз: предупреждение, 2-й раз: бан на 1 день{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_duplicate', lang) }}{% else %}Проверяйте, не создано ли уже подобное обсуждение{% endif %}
+                    <span style="color: #f39c12; font-weight: 600;"> - {% if lang and t %}{{ t('ban_warning', lang) }}{% else %}1-й раз: предупреждение, 2-й раз: бан на 1 день{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_offtopic', lang) }}{% else %}Не уводите обсуждение в оффтоп{% endif %}
+                    <span style="color: #f39c12; font-weight: 600;"> - {% if lang and t %}{{ t('ban_warning', lang) }}{% else %}1-й раз: предупреждение, 2-й раз: бан на 1 день{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_flame', lang) }}{% else %}Запрещены флеймы и переходы на личности{% endif %}
+                    <span style="color: #e74c3c; font-weight: 600;"> - {% if lang and t %}{{ t('ban_7_days', lang) }}{% else %}1-й раз: бан на 7 дней, 2-й раз: бан на 30 дней, 3-й раз: постоянный бан{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_bump', lang) }}{% else %}Не злоупотребляйте поднятием старых тем (bump){% endif %}
+                    <span style="color: #f39c12; font-weight: 600;"> - {% if lang and t %}{{ t('ban_1_day', lang) }}{% else %}1-й раз: предупреждение, 2-й раз: бан на 1 день, 3-й раз: бан на 7 дней{% endif %}</span>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="rule-section">
+            <h2>9. {% if lang and t %}{{ t('messages_rules', lang) }}{% else %}Правила личных сообщений{% endif %}</h2>
+            <ul>
+                <li>{% if lang and t %}{{ t('rule_pm_spam', lang) }}{% else %}Запрещена рассылка спама через личные сообщения{% endif %}
+                    <span style="color: #e74c3c; font-weight: 600;"> - {% if lang and t %}{{ t('ban_7_days', lang) }}{% else %}1-й раз: бан на 7 дней, 2-й раз: бан на 30 дней, 3-й раз: постоянный бан{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_pm_harassment', lang) }}{% else %}Запрещено преследование и домогательства через личные сообщения{% endif %}
+                    <span style="color: #e74c3c; font-weight: 600;"> - {% if lang and t %}{{ t('ban_30_days', lang) }}{% else %}1-й раз: бан на 30 дней, 2-й раз: постоянный бан{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_pm_unsolicited', lang) }}{% else %}Не отправляйте нежелательные сообщения пользователям{% endif %}
+                    <span style="color: #f39c12; font-weight: 600;"> - {% if lang and t %}{{ t('ban_3_days', lang) }}{% else %}1-й раз: предупреждение, 2-й раз: бан на 3 дня, 3-й раз: бан на 14 дней{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_pm_commercial', lang) }}{% else %}Запрещена коммерческая реклама через личные сообщения{% endif %}
+                    <span style="color: #e74c3c; font-weight: 600;"> - {% if lang and t %}{{ t('ban_14_days', lang) }}{% else %}1-й раз: бан на 14 дней, 2-й раз: бан на 30 дней, 3-й раз: постоянный бан{% endif %}</span>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="rule-section">
+            <h2>10. {% if lang and t %}{{ t('content_quality_rules', lang) }}{% else %}Правила качества контента{% endif %}</h2>
+            <ul>
+                <li>{% if lang and t %}{{ t('rule_informative', lang) }}{% else %}Публикуйте информативные и полезные материалы{% endif %}
+                    <span style="color: #f39c12; font-weight: 600;"> - {% if lang and t %}{{ t('ban_warning', lang) }}{% else %}1-й раз: предупреждение, 2-й раз: бан на 1 день{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_grammar', lang) }}{% else %}Соблюдайте правила грамматики и орфографии{% endif %}
+                    <span style="color: #f39c12; font-weight: 600;"> - {% if lang and t %}{{ t('ban_warning', lang) }}{% else %}1-й раз: предупреждение, 2-й раз: бан на 1 день{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_formatting', lang) }}{% else %}Используйте правильное форматирование текста{% endif %}
+                    <span style="color: #f39c12; font-weight: 600;"> - {% if lang and t %}{{ t('ban_warning', lang) }}{% else %}1-й раз: предупреждение, 2-й раз: бан на 1 день{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_empty', lang) }}{% else %}Запрещено размещение пустых или бессмысленных постов{% endif %}
+                    <span style="color: #f39c12; font-weight: 600;"> - {% if lang and t %}{{ t('ban_1_day', lang) }}{% else %}1-й раз: предупреждение, 2-й раз: бан на 1 день, 3-й раз: бан на 7 дней{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_repetitive', lang) }}{% else %}Не размещайте одинаковый контент многократно{% endif %}
+                    <span style="color: #e74c3c; font-weight: 600;"> - {% if lang and t %}{{ t('ban_7_days', lang) }}{% else %}1-й раз: бан на 7 дней, 2-й раз: бан на 30 дней, 3-й раз: постоянный бан{% endif %}</span>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="rule-section">
+            <h2>11. {% if lang and t %}{{ t('intellectual_property_rules', lang) }}{% else %}Правила интеллектуальной собственности{% endif %}</h2>
+            <ul>
+                <li>{% if lang and t %}{{ t('rule_copyright', lang) }}{% else %}Соблюдайте авторские права при публикации контента{% endif %}
+                    <span style="color: #e74c3c; font-weight: 600;"> - {% if lang and t %}{{ t('ban_30_days', lang) }}{% else %}1-й раз: бан на 30 дней, 2-й раз: постоянный бан{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_attribution', lang) }}{% else %}Указывайте автора и источник при использовании чужих материалов{% endif %}
+                    <span style="color: #f39c12; font-weight: 600;"> - {% if lang and t %}{{ t('ban_1_day', lang) }}{% else %}1-й раз: предупреждение, 2-й раз: бан на 1 день, 3-й раз: бан на 7 дней{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_license', lang) }}{% else %}Используйте только контент с соответствующей лицензией{% endif %}
+                    <span style="color: #e74c3c; font-weight: 600;"> - {% if lang and t %}{{ t('ban_14_days', lang) }}{% else %}1-й раз: бан на 14 дней, 2-й раз: бан на 30 дней, 3-й раз: постоянный бан{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_trademark', lang) }}{% else %}Не нарушайте права на товарные знаки и бренды{% endif %}
+                    <span style="color: #e74c3c; font-weight: 600;"> - {% if lang and t %}{{ t('ban_30_days', lang) }}{% else %}1-й раз: бан на 30 дней, 2-й раз: постоянный бан{% endif %}</span>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="rule-section">
+            <h2>12. {% if lang and t %}{{ t('safety_rules', lang) }}{% else %}Правила безопасности{% endif %}</h2>
+            <ul>
+                <li>{% if lang and t %}{{ t('rule_personal_data', lang) }}{% else %}Не публикуйте личные данные других пользователей без их согласия{% endif %}
+                    <span style="color: #e74c3c; font-weight: 600;"> - {% if lang and t %}{{ t('ban_permanent', lang) }}{% else %}Немедленный постоянный бан{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_doxing', lang) }}{% else %}Запрещен доxинг (раскрытие личной информации){% endif %}
+                    <span style="color: #e74c3c; font-weight: 600;"> - {% if lang and t %}{{ t('ban_permanent', lang) }}{% else %}Немедленный постоянный бан{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_phishing', lang) }}{% else %}Запрещены фишинговые ссылки и попытки получения данных{% endif %}
+                    <span style="color: #e74c3c; font-weight: 600;"> - {% if lang and t %}{{ t('ban_permanent', lang) }}{% else %}Немедленный постоянный бан{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_scam', lang) }}{% else %}Запрещены мошенничество и обман пользователей{% endif %}
+                    <span style="color: #e74c3c; font-weight: 600;"> - {% if lang and t %}{{ t('ban_permanent', lang) }}{% else %}Немедленный постоянный бан{% endif %}</span>
+                </li>
+                <li>{% if lang and t %}{{ t('rule_underage', lang) }}{% else %}Защищайте несовершеннолетних пользователей от нежелательного контента{% endif %}
+                    <span style="color: #e74c3c; font-weight: 600;"> - {% if lang and t %}{{ t('ban_permanent', lang) }}{% else %}Немедленный постоянный бан{% endif %}</span>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="rule-section">
+            <h2>13. {% if lang and t %}{{ t('violations_rules', lang) }}{% else %}Нарушения и санкции{% endif %}</h2>
             <ul>
                 <li>{% if lang and t %}{{ t('rule_warning', lang) }}{% else %}За первое нарушение выдается предупреждение{% endif %}</li>
                 <li>{% if lang and t %}{{ t('rule_ban', lang) }}{% else %}При повторных нарушениях возможен временный или постоянный бан{% endif %}</li>
                 <li>{% if lang and t %}{{ t('rule_deletion', lang) }}{% else %}Администрация оставляет за собой право удалять контент без предупреждения{% endif %}</li>
                 <li>{% if lang and t %}{{ t('rule_appeal', lang) }}{% else %}Вы можете обжаловать решение администрации{% endif %}</li>
+                <li>{% if lang and t %}{{ t('rule_accumulation', lang) }}{% else %}Нарушения накапливаются в течение 90 дней{% endif %}</li>
+                <li>{% if lang and t %}{{ t('rule_serious', lang) }}{% else %}Серьезные нарушения могут привести к немедленному бану без предупреждения{% endif %}</li>
             </ul>
             
             <div style="margin-top: 20px; padding: 20px; background: rgba(102, 126, 234, 0.1); border-radius: 10px;">
